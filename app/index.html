@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ja" data-skin="red">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WorkOut Note</title>
+<meta name="description" content="広告なし・自分専用の筋トレ記録ノート">
+<meta name="theme-color" content="#D23B38">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="WorkOut">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="css/app.css">
+<script>
+/* テーマを最初の描画前に反映（ちらつき防止） */
+try{if(localStorage.getItem('won-skin')==='black')document.documentElement.dataset.skin='black'}catch(e){}
+</script>
+</head>
+<body>
+<div class="app"><main id="view"></main></div>
+<nav class="tabs" aria-label="メインメニュー"><div id="tabs"></div></nav>
+<div id="sheet"></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+<noscript><p style="padding:24px;text-align:center">WorkOut Note を使うには JavaScript を有効にしてください。</p></noscript>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

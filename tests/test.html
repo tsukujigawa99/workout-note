@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>テスト実行中…</title>
+<style>
+body{font-family:"Yu Gothic UI","Meiryo",sans-serif;margin:16px;line-height:1.5;color:#222}
+h1{font-size:18px;margin:0 0 8px}
+#summary{font-size:22px;font-weight:700;padding:10px 14px;border-radius:8px;background:#eee;display:inline-block}
+#summary.ok{background:#dff3e6;color:#176b3a}
+#summary.ng{background:#fde2e1;color:#a3201d}
+h2{font-size:14px;margin:18px 0 4px;border-bottom:1px solid #ccc}
+ul{margin:0;padding-left:20px;font-size:13px}
+li.pass{color:#176b3a}
+li.fail{color:#a3201d;font-weight:700}
+li.fail pre{margin:2px 0 6px;white-space:pre-wrap;font-weight:400;color:#222;background:#fff3f3;padding:6px;border-radius:4px}
+</style>
+</head>
+<body>
+<h1>WorkOut Note 自動テスト（calc / store / Firebase同期）</h1>
+<div id="summary">実行中…</div>
+<div id="fails"></div>
+<div id="out"></div>
+<script type="module">
+const out = document.getElementById('out'), failsEl = document.getElementById('fails'), summary = document.getElementById('summary');
+let pass = 0, fail = 0, curList = null;
+const failures = [];
+const escH = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+function group(name) { const h = document.createElement('h2'); h.textContent = name; out.appendChild(h); curList = document.createElement('ul'); out.appendChild(curList); }
+async function test(name, fn) {
+  const li = document.createElement('li');
+  try { await fn(); pass++; li.className = 'pass'; li.textContent = 'PASS  ' + name; }
+  catch (e) { fail++; failures.push(name + ' — ' + e.message); li.className = 'fail'; li.innerHTML = 'FAIL  ' + escH(name) + '<pre>' + escH(e.message) + '</pre>'; }
+  curList.appendChild(li);
+}
+const show = v => (v === undefined ? 'undefined' : JSON.stringify(v));
+function eq(actual, expected, msg) { if (show(actual) !== show(expected)) throw new Error((msg ? msg + ': ' : '') + 'expected ' + show(expected) + ' / actual ' + show(actual)); }
+function ok(v, msg) { if (!v) throw new Error(msg || 'expected truthy'); }
+function near(actual, expected, msg) { if (Math.abs(actual - expected) > 1e-9) throw new Error((msg ? msg + ': ' : '') + 'expected ' + expected + ' / actual ' + actual); }
+function finish() {
+  const text = 'PASS ' + pass + ' / FAIL ' + fail;
+  summary.textContent = text; summary.className = fail ? 'ng' : 'ok';
+  document.title = (fail ? 'NG ' : 'OK ') + text;
+  if (fail) failsEl.innerHTML = '<h2>失敗したテスト</h2><ul>' + failures.map(f => '<li class="fail">' + escH(f) + '</li>').join('') + '</ul>';
+  window.__TEST_RESULT__ = { pass, fail, failures };
+}
+
+/** localStorage 互換のメモリ実装（実データには触れない） */
+class MemStorage {
+  constructor() { this.m = new Map(); this.failWrites = false; }
+  getItem(k) { return this.m.has(k) ? this.m.get(k) : null; }
+  setItem(k, v) { if (this.failWrites) throw new DOMException('quota', 'QuotaExceededError'); this.m.set(k, String(v)); }
+  removeItem(k) { this.m.delete(k); }
+  get length() { return this.m.size; }
+  key(i) { return [...this.m.keys()][i] ?? null; }
+  json(k) { const v = this.getItem(k); return v == null ? null : JSON.parse(v); }
+}
+
+let C, St, D, F, M, AU, CL, CFG;
+try {
+  C = await import('../app/js/calc.js');
+  St = await import('../app/js/store.js');
+  D = await import('../app/js/defaults.js');
+  F = await import('../app/js/store-firebase.js');
+  M = await import('../app/js/migrate.js');
+  AU = await import('../app/js/auth.js');
+  CL = await import('../app/js/cloud.js');
+  CFG = await import('../app/js/firebase-config.js');
+} catch (e) {
+  group('読み込み'); await test('モジュールの import', () => { throw e; }); finish(); throw e;
+}
+const set = (w, r, memo = '', assist = false) => ({ w, r, memo, assist });
+const dayOf = (...items) => ({ memo: '', items });
+
+/* ================= calc: 1RM・フォーマット ================= */
+group('calc: 推定1RM（仕様書4章の検算値）');
+await test('35kg×15回 → 48.13', () => eq(C.f2(C.rm(35, 15)), '48.13'));
+await test('35kg×20回 → 52.50', () => eq(C.f2(C.rm(35, 20)), '52.50'));
+await test('58kg×33回 → 105.85', () => eq(C.f2(C.rm(58, 33)), '105.85'));
+await test('履歴カードの MAX は小数1桁（48.125 → 48.1）', () => eq(C.f1(C.rm(35, 15)), '48.1'));
+await test('w が空(null)なら 0kg 扱い → RM 0', () => eq(C.rm(null, 10), 0));
+await test('RM計算機: 1RM 100 → 10回の目安 80.0', () => eq(C.f1(C.weightForReps(100, 10)), '80.0'));
+await test('f2 の四捨五入（1.005 → 1.01, 2.675 → 2.68）', () => { eq(C.f2(1.005), '1.01'); eq(C.f2(2.675), '2.68'); });
+await test('fw: 70 → 70.0 / 77.5 → 77.5 / 21.25 → 21.25 / null → 0.0', () => { eq(C.fw(70), '70.0'); eq(C.fw(77.5), '77.5'); eq(C.fw(21.25), '21.25'); eq(C.fw(null), '0.0'); });
+
+group('calc: 有効セット・ボリューム');
+await test('有効セットは r > 0', () => { ok(C.isValidSet(set(50, 1))); ok(!C.isValidSet(set(50, 0))); ok(!C.isValidSet(set(50, null))); ok(!C.isValidSet(null)); });
+await test('w が空でも r > 0 なら有効（0kg 扱い）', () => { ok(C.isValidSet(set(null, 10))); eq(C.itemVol({ ex: 'a', sets: [set(null, 10)] }), 0); });
+await test('ボリューム = Σ(w×r)、無効セットは除外', () => eq(C.itemVol({ ex: 'a', sets: [set(70, 10), set(77.5, 8), set(80, 0), set(60, null)] }), 1320));
+await test('itemRM は有効セットの最大', () => near(C.itemRM({ ex: 'a', sets: [set(70, 10), set(77.5, 8), set(200, 0)] }), 93));
+await test('dayVol は種目の合計', () => eq(C.dayVol(dayOf({ ex: 'a', sets: [set(10, 10)] }, { ex: 'b', sets: [set(20, 5)] })), 200));
+await test('dayVol(undefined) は 0', () => eq(C.dayVol(undefined), 0));
+await test('トン表示は kg÷1000 の小数2桁', () => { eq(C.ton(1320), '1.32'); eq(C.ton(0), '0.00'); eq(C.ton(12345), '12.35'); });
+await test('乗り物換算（小数1桁）', () => { eq(C.vehicles(3000, C.VEHICLES.car), '2.0'); eq(C.vehicles(7500, C.VEHICLES.bus), '0.5'); eq(C.vehicles(35000, C.VEHICLES.plane), '0.1'); });
+await test('isTrained: 有効セットが1つ以上', () => { ok(C.isTrained(dayOf({ ex: 'a', sets: [set(1, 1)] }))); ok(!C.isTrained(dayOf({ ex: 'a', sets: [set(1, 0)] }))); ok(!C.isTrained({ memo: 'x', items: [] })); ok(!C.isTrained(null)); });
+
+/* ================= calc: 日付 ================= */
+group('calc: 日付ユーティリティ（ローカル時刻）');
+await test('dateKey はゼロ埋め', () => eq(C.dateKey(new Date(2026, 0, 5)), '2026-01-05'));
+await test('深夜0:30でもローカル日付（UTCずれ無し）', () => eq(C.dateKey(new Date(2026, 8, 17, 0, 30)), '2026-09-17'));
+await test('23:59でもローカル日付', () => eq(C.todayKey(new Date(2026, 8, 17, 23, 59, 59)), '2026-09-17'));
+await test('fromKey → dateKey の往復', () => { eq(C.dateKey(C.fromKey('2026-12-31')), '2026-12-31'); eq(C.fromKey('2026-03-01').getHours(), 0); });
+await test('addDaysKey: 月またぎ・年またぎ', () => { eq(C.addDaysKey('2026-01-31', 1), '2026-02-01'); eq(C.addDaysKey('2026-01-01', -1), '2025-12-31'); eq(C.addDaysKey('2026-12-31', 1), '2027-01-01'); });
+await test('addDaysKey: うるう年', () => { eq(C.addDaysKey('2028-02-28', 1), '2028-02-29'); eq(C.addDaysKey('2026-02-28', 1), '2026-03-01'); eq(C.addDaysKey('2028-03-01', -1), '2028-02-29'); });
+await test('addDaysKey: 365日を1日ずつ進めても抜け・重複なし', () => { let k = '2026-01-01'; const seen = new Set([k]); for (let i = 0; i < 365; i++) { k = C.addDaysKey(k, 1); seen.add(k); } eq(seen.size, 366); eq(k, '2027-01-01'); });
+await test('isKey: 形式と実在日', () => { ok(C.isKey('2026-09-17')); ok(!C.isKey('2026-02-30')); ok(!C.isKey('2026-9-17')); ok(!C.isKey('<b>')); ok(!C.isKey(null)); });
+await test('slash / md', () => { eq(C.slash('2026-09-17'), '2026/09/17'); eq(C.md('2026-09-17'), '09/17'); });
+await test('shiftMonth: 年またぎ', () => { eq(C.shiftMonth(2026, 0, -1), [2025, 11]); eq(C.shiftMonth(2026, 11, 1), [2027, 0]); eq(C.shiftMonth(2026, 5, 1), [2026, 6]); });
+await test('calendarCells: 2026年9月は5週・8/30始まり', () => { const c = C.calendarCells(2026, 8); eq(c.length, 35); eq(c[0], { key: '2026-08-30', day: 30, out: true }); eq(c[2], { key: '2026-09-01', day: 1, out: false }); eq(c[34].key, '2026-10-03'); });
+await test('calendarCells: 2026年2月は日曜始まりの4週', () => { const c = C.calendarCells(2026, 1); eq(c.length, 28); eq(c[0].key, '2026-02-01'); ok(c.every(x => !x.out)); });
+await test('calendarCells: 6週になる月（2026年8月）', () => eq(C.calendarCells(2026, 7).length, 42));
+
+/* ================= calc: 期間集計 ================= */
+group('calc: 期間集計の境界');
+const T = '2026-09-17';
+const one = kg => dayOf({ ex: 'a', sets: [set(kg, 1)] });
+const days = {
+  [T]: one(1), [C.addDaysKey(T, -6)]: one(10), [C.addDaysKey(T, -7)]: one(100),
+  [C.addDaysKey(T, -27)]: one(1000), [C.addDaysKey(T, -28)]: one(10000), [C.addDaysKey(T, -41)]: one(100000), [C.addDaysKey(T, -42)]: one(1000000),
+};
+await test('7日間 = 今日を含む直近7日（6日前は含む・7日前は含まない）', () => eq(C.rangeVol(days, T, 0, 6), 11));
+await test('28日間 = 直近28日（27日前は含む・28日前は含まない）', () => eq(C.rangeVol(days, T, 0, 27), 1111));
+await test('総合計 = 全期間', () => eq(C.totalVol(days), 1111111));
+await test('週別バー = 今日起点で7日ずつ6本', () => eq(C.weeklyVols(days, T, 6), [11, 100, 0, 1000, 10000, 100000]));
+await test('週別バーに42日前は入らない', () => eq(C.weeklyVols(days, T, 6).reduce((a, b) => a + b, 0), 111111));
+await test('未来の日付は 7日間に入らない', () => eq(C.rangeVol({ [C.addDaysKey(T, 1)]: one(5) }, T, 0, 6), 0));
+await test('データ無しは 0', () => { eq(C.rangeVol({}, T, 0, 6), 0); eq(C.totalVol({}), 0); eq(C.weeklyVols({}, T).length, 6); });
+await test('MONTHLY ARCHIVE = 表示月の実施日数（有効セットのある日だけ）', () => {
+  const d = { '2026-09-01': one(1), '2026-09-30': one(1), '2026-08-31': one(1), '2026-10-01': one(1), '2026-09-10': { memo: 'メモだけ', items: [] }, '2026-09-11': dayOf({ ex: 'a', sets: [set(10, 0)] }) };
+  eq(C.monthDays(d, 2026, 8), 2); eq(C.monthDays(d, 2026, 7), 1); eq(C.monthDays(d, 2026, 10), 0); eq(C.totalDays(d), 4);
+});
+await test('monthDays: 1月と11月を取り違えない', () => { const d = { '2026-01-05': one(1), '2026-11-05': one(1), '2026-10-05': one(1) }; eq(C.monthDays(d, 2026, 0), 1); eq(C.monthDays(d, 2026, 10), 1); });
+await test('inRange: range日前は含む、0 は全期間', () => { ok(C.inRange(C.addDaysKey(T, -30), T, 30)); ok(!C.inRange(C.addDaysKey(T, -31), T, 30)); ok(C.inRange('2001-01-01', T, 0)); });
+
+group('calc: 履歴・コピー');
+const hdays = {
+  '2026-09-10': dayOf({ ex: 'bp', sets: [set(70, 10)] }, { ex: 'sq', sets: [set(90, 5)] }),
+  '2026-09-12': dayOf({ ex: 'bp', sets: [set(72.5, 8, 'きつい', true), set(60, 0)] }),
+  '2026-09-14': dayOf({ ex: 'bp', sets: [set(80, 0)] }),
+  '2026-09-15': dayOf({ ex: 'sq', sets: [set(95, 5)] }),
+};
+await test('exHistory: 新しい順・有効セットのある日だけ', () => eq(C.exHistory(hdays, 'bp').map(h => h.k), ['2026-09-12', '2026-09-10']));
+await test('exHistory: beforeKey は「選択日より前」（当日を含まない）', () => { eq(C.exHistory(hdays, 'bp', '2026-09-12').map(h => h.k), ['2026-09-10']); eq(C.exHistory(hdays, 'bp', '2026-09-10').length, 0); });
+await test('copySets: 重量・回数のみ（メモ・補助はコピーしない、無効セット除外）', () => eq(C.copySets(hdays['2026-09-12'].items[0]), [{ w: 72.5, r: 8, memo: '', assist: false }]));
+await test('recentTrainedKeys: 選択日より前だけ（当日・未来日は出さない）', () => {
+  eq(C.recentTrainedKeys(hdays, '2026-09-12'), ['2026-09-10']); eq(C.recentTrainedKeys(hdays, '2026-09-10'), []); eq(C.recentTrainedKeys(hdays, '2026-09-11'), ['2026-09-10']);
+});
+await test('recentTrainedKeys: 新しい順・有効セットのある日だけ・件数上限', () => {
+  eq(C.recentTrainedKeys(hdays, '2026-09-15'), ['2026-09-12', '2026-09-10']); eq(C.recentTrainedKeys(hdays, '2099-01-01'), ['2026-09-15', '2026-09-12', '2026-09-10']);
+  const many = {}; for (let i = 1; i <= 40; i++) many[C.addDaysKey(T, -i)] = one(1);
+  const r = C.recentTrainedKeys(many, T, 30); eq(r.length, 30); eq(r[0], C.addDaysKey(T, -1));
+});
+await test('mergeCopyDay: 既にある種目は重複追加しない', () => {
+  const dst = { memo: 'm', items: [{ ex: 'bp', sets: [set(50, 5)] }] };
+  const { day, added } = C.mergeCopyDay(dst, hdays['2026-09-10']);
+  eq(added, 1); eq(day.items.map(i => i.ex), ['bp', 'sq']); eq(day.items[0].sets[0].w, 50); eq(day.memo, 'm'); eq(dst.items.length, 1, '元データは変更しない');
+});
+await test('mergeCopyDay: コピー先が空(null)でもよい', () => { const { day, added } = C.mergeCopyDay(null, hdays['2026-09-12']); eq(added, 1); eq(day.items[0].sets, [{ w: 72.5, r: 8, memo: '', assist: false }]); });
+
+group('calc: ルーティング・選択日の復元・グラフ目盛り・同名チェック');
+await test('parseHash: #/pick/<date> と #/entry/<date>/<exId>', () => {
+  eq(C.parseHash('#/pick/2026-09-10', T), { name: 'pick', date: '2026-09-10', ex: null, hash: '#/pick/2026-09-10' });
+  eq(C.parseHash('#/entry/2026-09-10/bp', T), { name: 'entry', date: '2026-09-10', ex: 'bp', hash: '#/entry/2026-09-10/bp' });
+});
+await test('parseHash: 不正な日付は今日にフォールバック（URL も正規化）', () => {
+  eq(C.parseHash('#/entry/2026-02-30/bp', T).hash, '#/entry/' + T + '/bp'); eq(C.parseHash('#/entry/<script>/bp', T).date, T);
+  eq(C.parseHash('#/pick', T).hash, '#/pick/' + T); eq(C.parseHash('#/pick/abc', T).date, T);
+});
+await test('parseHash: 日付は 2000-01-01〜今日+1年 の範囲外なら今日にフォールバック', () => {
+  eq(C.dateMax('2026-09-17'), '2027-09-17'); eq(C.dateMax('2028-02-29'), '2029-03-01');
+  eq(C.parseHash('#/pick/2000-01-01', T).date, '2000-01-01'); eq(C.parseHash('#/pick/1999-12-31', T).date, T);
+  eq(C.parseHash('#/entry/2027-09-17/bp', T).date, '2027-09-17'); eq(C.parseHash('#/entry/2027-09-18/bp', T).date, T); eq(C.parseHash('#/entry/9999-12-31/bp', T).hash, '#/entry/' + T + '/bp');
+  ok(C.isUsableDate(T, T)); ok(!C.isUsableDate('2026-02-30', T)); ok(!C.isUsableDate('0001-01-01', T));
+  eq(C.restoreDate(JSON.stringify({ date: '1999-01-01', on: T }), T), T, '選択日の復元も同じ範囲');
+});
+await test('findSamePart: 同名の部位（前後空白は無視）を検出、自分自身は除外', () => {
+  const ps = [{ id: 'chest', name: '胸' }, { id: 'x1', name: '有酸素', hidden: true }];
+  eq(C.findSamePart(ps, ' 胸 ').id, 'chest'); eq(C.findSamePart(ps, '胸', 'chest'), null); eq(C.findSamePart(ps, '有酸素').hidden, true); eq(C.findSamePart(ps, '背中'), null);
+});
+await test('parseHash: 旧形式 #/entry/<exId> は今日の日付として解釈', () => eq(C.parseHash('#/entry/bp', T), { name: 'entry', date: T, ex: 'bp', hash: '#/entry/' + T + '/bp' }));
+await test('parseHash: history は日付非依存、タブ画面、未知の画面、空', () => {
+  eq(C.parseHash('#/history/bp', T), { name: 'history', date: null, ex: 'bp', hash: '#/history/bp' }); eq(C.parseHash('#/body', T).hash, '#/body');
+  eq(C.parseHash('#/nope', T), null); eq(C.parseHash('#/<script>', T), null); eq(C.parseHash('', T).name, 'home');
+  eq(C.parseHash('#/entry/2026-09-10/x%2Fy', T).ex, 'x/y'); eq(C.parseHash('#/entry/2026-09-10/%E0%A4%A', T).ex, null, '壊れたエンコードでも落ちない');
+});
+await test('restoreDate: 保存した日と同じ日のうちだけ復元、不正値は今日', () => {
+  eq(C.restoreDate(JSON.stringify({ date: '2026-09-10', on: T }), T), '2026-09-10'); eq(C.restoreDate(JSON.stringify({ date: '2026-09-10', on: '2026-09-16' }), T), T, '翌日は今日に戻す');
+  eq(C.restoreDate(JSON.stringify({ date: '2026-02-30', on: T }), T), T); eq(C.restoreDate('{こわれ', T), T); eq(C.restoreDate(null, T), T); eq(C.restoreDate('"x"', T), T);
+});
+await test('chartTicks: 実データの 最小・中間・最大（範囲外の値を出さない）', () => { eq(C.chartTicks([60, 75, 70]), [60, 67.5, 75]); eq(C.chartTicks([72.4, 72.4]), [72.4]); eq(C.chartTicks([5]), [5]); eq(C.chartTicks([]), []); });
+await test('normRmReps: 1〜999 の整数', () => { eq(C.normRmReps('0'), 1); eq(C.normRmReps('8.4'), 8); eq(C.normRmReps('5000'), 999); eq(C.normRmReps('-3'), null); eq(C.normRmReps(''), null); });
+await test('findSameName: 同じ部位の同名（前後空白は無視）だけ検出、自分自身は除外', () => {
+  const ex = [{ id: 'a', part: 'chest', name: 'ベンチプレス' }, { id: 'b', part: 'back', name: '懸垂' }, { id: 'c', part: 'chest', name: 'フライ', hidden: true }];
+  eq(C.findSameName(ex, 'chest', ' ベンチプレス ').id, 'a'); eq(C.findSameName(ex, 'back', 'ベンチプレス'), null); eq(C.findSameName(ex, 'chest', 'ベンチプレス', 'a'), null);
+  eq(C.findSameName(ex, 'chest', 'フライ').hidden, true); eq(C.findSameName(ex, 'chest', 'ベンチ'), null);
+});
+await test('normName: trim＋40文字', () => { eq(C.normName('  a  '), 'a'); eq(C.normName('x'.repeat(50)).length, 40); eq(C.normName(null), ''); });
+
+group('calc: 入力値の正規化');
+await test('normW: 空→null、負数・非数→null（無視）', () => { eq(C.normW(''), null); eq(C.normW('  '), null); eq(C.normW('-5'), null); eq(C.normW('abc'), null); eq(C.normW(NaN), null); eq(C.normW(Infinity), null); eq(C.normW(null), null); });
+await test('normW: 0〜999.5 に収める', () => { eq(C.normW('0'), 0); eq(C.normW('72.5'), 72.5); eq(C.normW('999.5'), 999.5); eq(C.normW('1000'), 999.5); eq(C.normW('1e9'), 999.5); eq(C.normW('21.25'), 21.25); eq(C.normW('10.129'), 10.13); });
+await test('normR: 0〜999 の整数', () => { eq(C.normR(''), null); eq(C.normR('-1'), null); eq(C.normR('x'), null); eq(C.normR('10'), 10); eq(C.normR('10.6'), 11); eq(C.normR('99999'), 999); eq(C.normR('0'), 0); });
+await test('stepWeight / stepReps: 下限0・上限あり・浮動小数の誤差なし', () => { eq(C.stepWeight(0, -2.5), 0); eq(C.stepWeight(998, 2.5), 999.5); eq(C.stepWeight(0.1, 0.2), 0.3); eq(C.stepWeight(20, 1.25), 21.25); eq(C.stepReps(0, -1), 0); eq(C.stepReps(999, 1), 999); eq(C.stepReps(10, 1), 11); });
+await test('normBodyVal: 0以下・非数は無し、上限、小数1桁', () => { eq(C.normBodyVal('', 999.9), undefined); eq(C.normBodyVal('0', 999.9), undefined); eq(C.normBodyVal('-3', 999.9), undefined); eq(C.normBodyVal('72.64', 999.9), 72.6); eq(C.normBodyVal('150', 100), 100); });
+await test('cleanDay: 無効セット・空の種目を除去、元データは変更しない', () => {
+  const src = { memo: 'a', items: [{ ex: 'bp', sets: [set(70, 10), set(null, null), set(80, 0)] }, { ex: 'sq', sets: [set(null, null)] }, { ex: '', sets: [set(1, 1)] }] };
+  const d = C.cleanDay(src);
+  eq(d, { memo: 'a', items: [{ ex: 'bp', sets: [{ w: 70, r: 10, memo: '', assist: false }] }] }); eq(src.items.length, 3);
+});
+await test('cleanDay: 異常値を丸める（巨大値・負数・文字列）', () => eq(C.cleanDay({ memo: 5, items: [{ ex: 'a', sets: [{ w: 1e9, r: 1e9, memo: null, assist: 1 }, { w: -5, r: 3 }, { w: '<b>', r: '4' }] }] }),
+  { memo: '5', items: [{ ex: 'a', sets: [{ w: 999.5, r: 999, memo: '', assist: true }, { w: null, r: 3, memo: '', assist: false }, { w: null, r: 4, memo: '', assist: false }] }] }));
+await test('cleanDay: 壊れた入力でも落ちない', () => { eq(C.cleanDay(null), { memo: '', items: [] }); eq(C.cleanDay({ items: 'x' }), { memo: '', items: [] }); eq(C.cleanDay({ items: [null, { ex: 'a' }] }), { memo: '', items: [] }); });
+await test('isEmptyDay: items 空かつ memo 空（空白のみも空扱い）', () => { ok(C.isEmptyDay({ memo: '', items: [] })); ok(C.isEmptyDay({ memo: '  ', items: [] })); ok(!C.isEmptyDay({ memo: 'x', items: [] })); ok(!C.isEmptyDay({ memo: '', items: [{ ex: 'a', sets: [set(1, 1)] }] })); });
+await test('moveItem: 同じ部位の中だけで上下に移動', () => {
+  const l = [{ id: 'a', p: 1 }, { id: 'x', p: 2 }, { id: 'b', p: 1 }, { id: 'c', p: 1 }], same = (x, y) => x.p === y.p, ids = r => r.map(x => x.id).join('');
+  eq(ids(C.moveItem(l, 'b', -1, same)), 'bxac'); eq(ids(C.moveItem(l, 'a', 1, same)), 'bxac'); eq(ids(C.moveItem(l, 'a', -1, same)), 'axbc'); eq(ids(C.moveItem(l, 'c', 1, same)), 'axbc');
+  eq(ids(C.moveItem(l, 'x', 1, same)), 'axbc'); eq(ids(C.moveItem(l, 'zz', 1, same)), 'axbc'); eq(ids(C.moveItem(l, 'a', 1)), 'xabc'); eq(ids(l), 'axbc', '元配列は変更しない');
+});
+
+/* ================= store ================= */
+group('store: 保存・削除ルール（LocalAdapter + メモリストレージ）');
+async function mk(mem = new MemStorage()) { const s = St.createStore(new St.LocalAdapter(mem, null)); await s.init(); return { s, mem }; }
+await test('キー名は won-days / won-body / won-master / won-settings', () => eq(St.KEYS, { days: 'won-days', body: 'won-body', master: 'won-master', settings: 'won-settings' }));
+await test('初回は空データ＋初期マスタ＋設定初期値（サンプルデータなし）', async () => {
+  const { s, mem } = await mk();
+  eq(s.days(), {}); eq(s.bodies(), {}); eq(s.day('2026-09-17'), null); eq(s.body('2026-09-17'), null);
+  eq(s.master().parts.map(p => p.name), ['胸', '背中', '肩', '腕', '脚', '腹']); eq(s.master().exercises.length, 21); ok(s.master().exercises.every(e => !('base' in e)));
+  eq(s.settings().step, 2.5); eq(s.settings().timerSec, 90); eq(mem.m.size, 0, '読むだけでは何も書かない');
+});
+await test('saveDay: 保存され、同期で読め、localStorage に JSON で入る', async () => {
+  const { s, mem } = await mk();
+  const p = s.saveDay('2026-09-17', dayOf({ ex: 'bp', sets: [set(70, 10)] }));
+  eq(s.day('2026-09-17').items[0].sets[0].w, 70, 'await 前でも同期で読める');
+  eq(await p, true); ok(s.day('2026-09-17').updatedAt > 0);
+  eq(mem.json('won-days')['2026-09-17'].items[0], { ex: 'bp', sets: [{ w: 70, r: 10, memo: '', assist: false }] });
+});
+await test('saveDay: items が空かつ memo が空なら削除', async () => {
+  const { s, mem } = await mk();
+  await s.saveDay('2026-09-17', dayOf({ ex: 'bp', sets: [set(70, 10)] }));
+  await s.saveDay('2026-09-17', { memo: '', items: [] });
+  eq(s.day('2026-09-17'), null); eq(mem.json('won-days'), {});
+});
+await test('saveDay: メモだけの日は残る／メモも消すと削除', async () => {
+  const { s, mem } = await mk();
+  await s.saveDay('2026-09-17', { memo: '寝不足', items: [] }); eq(mem.json('won-days')['2026-09-17'].memo, '寝不足');
+  await s.saveDay('2026-09-17', { memo: '', items: [] }); eq(mem.json('won-days'), {});
+});
+await test('saveDay: 空セットは保存データに残らない（有効セットが無い種目ごと消える）', async () => {
+  const { s, mem } = await mk();
+  await s.saveDay('2026-09-17', dayOf({ ex: 'bp', sets: [set(70, 10), set(null, null), set(75, null)] }, { ex: 'sq', sets: [set(null, null), set(null, null), set(null, null)] }));
+  eq(mem.json('won-days')['2026-09-17'].items, [{ ex: 'bp', sets: [{ w: 70, r: 10, memo: '', assist: false }] }]);
+  await s.saveDay('2026-09-18', dayOf({ ex: 'sq', sets: [set(null, null)] })); eq(s.day('2026-09-18'), null);
+});
+await test('saveDay: 不正な日付キーは保存しない', async () => { const { s, mem } = await mk(); eq(await s.saveDay('<script>', dayOf({ ex: 'a', sets: [set(1, 1)] })), false); eq(await s.saveDay('2026-02-30', dayOf({ ex: 'a', sets: [set(1, 1)] })), false); eq(mem.m.size, 0); });
+await test('saveDay: HTMLタグ文字列はそのままの文字列として保持（表示側でエスケープ）', async () => { const { s, mem } = await mk(); await s.saveDay('2026-09-17', { memo: '<img src=x onerror=alert(1)>', items: [] }); eq(mem.json('won-days')['2026-09-17'].memo, '<img src=x onerror=alert(1)>'); });
+await test('saveBody: w だけ／f だけでも保存、両方空なら削除', async () => {
+  const { s, mem } = await mk();
+  await s.saveBody('2026-09-17', { w: '72.4', f: '' }); eq(s.body('2026-09-17').w, 72.4); ok(!('f' in mem.json('won-body')['2026-09-17']));
+  await s.saveBody('2026-09-16', { w: '', f: '17.2' }); eq(s.body('2026-09-16').f, 17.2);
+  await s.saveBody('2026-09-17', { w: '', f: '' }); eq(s.body('2026-09-17'), null); eq(Object.keys(mem.json('won-body')), ['2026-09-16']);
+  await s.saveBody('2026-09-16', { w: 0, f: -1 }); eq(mem.json('won-body'), {});
+});
+await test('再読み込みしても保持される（別インスタンスで init）', async () => {
+  const { s, mem } = await mk();
+  await s.saveDay('2026-09-17', { memo: 'm', items: [{ ex: 'bp', sets: [set(70, 10, 'メモ', true)] }] });
+  await s.saveBody('2026-09-17', { w: 70, f: 15 });
+  await s.saveSettings({ step: 1.25, timerSec: 120 });
+  const m = s.master(); await s.saveMaster({ ...m, exercises: m.exercises.concat([{ id: 'x1', part: 'chest', name: '新種目' }]) });
+  const { s: s2 } = await mk(mem);
+  eq(s2.day('2026-09-17').items[0].sets[0], { w: 70, r: 10, memo: 'メモ', assist: true }); eq(s2.day('2026-09-17').memo, 'm');
+  eq(s2.body('2026-09-17').f, 15); eq(s2.settings().step, 1.25); eq(s2.settings().timerSec, 120);
+  eq(s2.master().exercises.length, 22); eq(s2.master().exercises[21].name, '新種目');
+});
+await test('saveMaster: hidden は残し、配列順＝表示順を保持', async () => {
+  const { s, mem } = await mk(); const m = s.master();
+  await s.saveMaster({ parts: m.parts.slice().reverse(), exercises: m.exercises.map(e => (e.id === 'bp' ? { ...e, hidden: true } : e)) });
+  const j = mem.json('won-master'); eq(j.parts[0].id, 'abs'); eq(j.exercises.find(e => e.id === 'bp').hidden, true); ok(!('hidden' in j.exercises.find(e => e.id === 'sq'))); ok(j.updatedAt > 0);
+});
+await test('saveSettings: 不正値は採用しない（step は選択肢のみ、timerSec は 1〜3600）', async () => {
+  const { s } = await mk();
+  await s.saveSettings({ step: 3 }); eq(s.settings().step, 2.5);
+  await s.saveSettings({ step: 5, timerSec: 0 }); eq(s.settings().step, 5); eq(s.settings().timerSec, 90);
+  await s.saveSettings({ timerSec: 99999 }); eq(s.settings().timerSec, 90);
+  await s.saveSettings({ timerSec: 45 }); eq(s.settings().timerSec, 45); eq(s.settings().step, 5);
+});
+await test('壊れた保存データでも起動できる', async () => {
+  const mem = new MemStorage(); mem.setItem('won-days', '{壊れたJSON'); mem.setItem('won-body', '[1,2]'); mem.setItem('won-master', '{"parts":1}'); mem.setItem('won-settings', '"x"');
+  const { s } = await mk(mem); eq(s.days(), {}); eq(s.bodies(), {}); eq(s.master().parts.length, 6); eq(s.settings().step, 2.5);
+});
+const corruptKeys = (mem, name) => [...mem.m.keys()].filter(k => k.startsWith('won-' + name + '-corrupt-'));
+await test('JSON が壊れている時は元文字列を won-<name>-corrupt-<timestamp> に退避して通知', async () => {
+  const mem = new MemStorage(); mem.setItem('won-days', '{壊れたJSON'); mem.setItem('won-body', JSON.stringify({ '2026-09-01': { w: 70 } }));
+  const s = St.createStore(new St.LocalAdapter(mem, null)); const notes = []; s.onNotice(n => notes.push(n)); await s.init();
+  const ks = corruptKeys(mem, 'days'); eq(ks.length, 1); ok(/^won-days-corrupt-\d+$/.test(ks[0]), ks[0]); eq(mem.getItem(ks[0]), '{壊れたJSON', '元文字列のまま退避');
+  eq(mem.getItem('won-days'), null, '壊れた元データは取り除く'); eq(notes.length, 1); eq(notes[0].type, 'corrupt'); eq(notes[0].issues.map(i => i.name), ['days']); eq(notes[0].issues[0].saved, ks[0]);
+  eq(s.body('2026-09-01').w, 70, '無事なデータはそのまま読める'); eq(corruptKeys(mem, 'body').length, 0);
+});
+await test('形の不正な日が一部だけある時も、捨てる前に元データ全体を退避し、整形後を書き直す', async () => {
+  const src = { 'bad-key': one(1), '2026-09-01': one(5), '2026-09-02': 'x', '2026-09-03': { memo: '', items: [{ ex: 'a', sets: [set(null, null)] }] } };
+  const mem = new MemStorage(); mem.setItem('won-days', JSON.stringify(src));
+  const s = St.createStore(new St.LocalAdapter(mem, null)); const notes = []; s.onNotice(n => notes.push(n)); await s.init();
+  eq(Object.keys(s.days()), ['2026-09-01']); const ks = corruptKeys(mem, 'days'); eq(ks.length, 1); eq(JSON.parse(mem.getItem(ks[0])), src, '退避は元データ全体');
+  eq(Object.keys(mem.json('won-days')), ['2026-09-01'], '整形後のデータで書き直す'); eq(notes.length, 1);
+  const s2 = St.createStore(new St.LocalAdapter(mem, null)); let n2 = 0; s2.onNotice(() => n2++); await s2.init();
+  eq(n2, 0, '次回の起動では通知しない'); eq(corruptKeys(mem, 'days').length, 1, '退避が増え続けない');
+});
+await test('形の不正な体組成・マスタも退避する／正常データでは退避も通知もしない', async () => {
+  const mem = new MemStorage(); mem.setItem('won-body', '[1,2]'); mem.setItem('won-master', '{"parts":1}');
+  const s = St.createStore(new St.LocalAdapter(mem, null)); const notes = []; s.onNotice(n => notes.push(n)); await s.init();
+  eq(corruptKeys(mem, 'body').length, 1); eq(corruptKeys(mem, 'master').length, 1); eq(notes[0].issues.map(i => i.name).sort(), ['body', 'master']); eq(s.master().parts.length, 6);
+  const { s: s3, mem: mem3 } = await mk(); await s3.saveDay('2026-09-17', one(1)); await s3.saveBody('2026-09-17', { w: 70 }); await s3.saveMaster(s3.master());
+  const s4 = St.createStore(new St.LocalAdapter(mem3, null)); let n4 = 0; s4.onNotice(() => n4++); await s4.init(); eq(n4, 0); eq([...mem3.m.keys()].filter(k => k.includes('corrupt')).length, 0);
+});
+await test('退避データ(-corrupt-)は名前ごとに最新2件だけ残す', async () => {
+  const mem = new MemStorage(), ad = new St.LocalAdapter(mem, null);
+  mem.setItem('won-days-corrupt-1000', 'old1'); mem.setItem('won-days-corrupt-2000', 'old2'); mem.setItem('won-days-corrupt-999', 'old0'); mem.setItem('won-body-corrupt-1', 'b1');
+  const k = ad.backup('days', '{new'); const left = [...mem.m.keys()].filter(x => x.startsWith('won-days-corrupt-')).sort();
+  eq(left.length, 2); ok(left.includes(k), '今回の退避は残る'); ok(left.includes('won-days-corrupt-2000'), '次に新しいものが残る'); eq(mem.getItem('won-body-corrupt-1'), 'b1', '他の名前の退避は消さない');
+  const k2 = ad.backup('days', '{new2'), k3 = ad.backup('days', '{new3'); const left2 = [...mem.m.keys()].filter(x => x.startsWith('won-days-corrupt-'));
+  eq(left2.length, 2); ok(left2.includes(k3)); ok(k2 !== k3, '同一ミリ秒でもキーが衝突しない'); eq(mem.getItem(k3), '{new3');
+});
+await test('退避先に書けない（容量超過）場合でも起動でき、通知は出る', async () => {
+  const mem = new MemStorage(); mem.setItem('won-days', '{x'); mem.failWrites = true;
+  const s = St.createStore(new St.LocalAdapter(mem, null)); const notes = []; s.onNotice(n => notes.push(n)); await s.init();
+  eq(s.days(), {}); eq(notes.length, 1); eq(notes[0].issues[0].saved, null);
+});
+await test('saveMaster: 名称は trim＋40文字に切り詰め', async () => {
+  const { s, mem } = await mk(); const m = s.master(), long = 'あ'.repeat(60);
+  await s.saveMaster({ parts: m.parts.map((p, i) => (i ? p : { ...p, name: '  胸  ' })), exercises: m.exercises.concat([{ id: 'x1', part: 'chest', name: '  ' + long + '  ' }, { id: 'x2', part: 'chest', name: '  ケーブルフライ ' }]) });
+  const j = mem.json('won-master'); eq(j.parts[0].name, '胸'); eq(j.exercises.find(e => e.id === 'x1').name.length, 40); eq(j.exercises.find(e => e.id === 'x2').name, 'ケーブルフライ');
+});
+await test('読み込み時に不正キー・空の日を捨てる', async () => {
+  const mem = new MemStorage(); mem.setItem('won-days', JSON.stringify({ 'bad': one(1), '2026-09-01': one(1), '2026-09-02': { memo: '', items: [{ ex: 'a', sets: [set(null, null)] }] } }));
+  const { s } = await mk(mem); eq(Object.keys(s.days()), ['2026-09-01']);
+});
+await test('書き込み失敗（容量超過など）は例外にせず onError 通知＋false', async () => {
+  const { s, mem } = await mk(); let errs = 0; s.onError(() => errs++); mem.failWrites = true;
+  eq(await s.saveDay('2026-09-17', one(1)), false); eq(await s.saveBody('2026-09-17', { w: 70 }), false); eq(await s.saveSettings({ step: 5 }), false); eq(await s.saveMaster(s.master()), false);
+  eq(errs, 4); eq(s.day('2026-09-17').items.length, 1, 'メモリ上では使い続けられる');
+});
+await test('ストレージ自体が使えない環境でも起動でき、保存時は onError', async () => {
+  const s = St.createStore(new St.LocalAdapter(null, null)); await s.init(); let errs = 0; s.onError(() => errs++);
+  eq(s.master().parts.length, 6); eq(await s.saveDay('2026-09-17', one(1)), false); eq(errs, 1);
+});
+await test('onChange: 保存のたびに origin=local で通知', async () => {
+  const { s } = await mk(); const ev = []; s.onChange(e => ev.push(e.origin + ':' + e.what));
+  await s.saveDay('2026-09-17', one(1)); await s.saveBody('2026-09-17', { w: 70 }); await s.saveSettings({ step: 1 }); await s.saveMaster(s.master());
+  eq(ev, ['local:days', 'local:body', 'local:settings', 'local:master']);
+});
+await test('onChange: 他タブの変更（storage イベント）は再読込して origin=remote で通知', async () => {
+  const mem = new MemStorage(), bus = new EventTarget(), s = St.createStore(new St.LocalAdapter(mem, bus)); await s.init();
+  const got = new Promise(res => s.onChange(e => res(e.origin)));
+  mem.setItem('won-days', JSON.stringify({ '2026-09-17': one(7) }));
+  const ev = new Event('storage'); ev.key = 'won-days'; bus.dispatchEvent(ev);
+  eq(await got, 'remote'); eq(s.day('2026-09-17').items[0].sets[0].w, 7);
+});
+await test('newId: x で始まり衝突しない', () => { const ids = new Set(); for (let i = 0; i < 2000; i++) ids.add(St.newId()); eq(ids.size, 2000); ok([...ids].every(i => /^x[0-9a-z]+$/.test(i))); });
+await test('defaults: 初期マスタは mock と同じ 6部位・21種目、ID重複なし', () => { const m = D.defaultMaster(); eq(m.parts.length, 6); eq(m.exercises.length, 21); eq(new Set(m.exercises.map(e => e.id)).size, 21); ok(m.exercises.every(e => m.parts.some(p => p.id === e.part))); });
+await test('テストは実際の localStorage を汚さない', () => { let n = -1; try { n = Object.values(St.KEYS).filter(k => localStorage.getItem(k) !== null).length; } catch (e) { n = 0; } eq(n, 0, 'このオリジン(テスト用ポート)の localStorage に won-* が無いこと'); });
+
+/* ================= フェーズ2: Firebase 同期（SDK はモックに差し替え。実際の通信はしない） ================= */
+const cloneJ = o => JSON.parse(JSON.stringify(o));
+const tick = (ms = 15) => new Promise(r => setTimeout(r, ms));
+/** Firestore モジュラーAPI の最小モック（メモリ内）。online=false の間は書き込みの Promise が解決しない */
+class FakeFs {
+  constructor() { this.docs = new Map(); this.pending = new Set(); this.listeners = []; this.online = true; this.acks = []; this.silent = false; this.denied = false; this.rejectWrites = null; this.batches = []; this.writes = []; this.fromCache = false; }
+  initializeFirestore() { return { fake: true }; } getFirestore() { return { fake: true }; }
+  persistentLocalCache(o) { return { kind: 'persistent', ...o }; } persistentMultipleTabManager() { return { kind: 'multi' }; } memoryLocalCache() { return { kind: 'memory' }; }
+  collection(db, ...seg) { return { type: 'col', path: seg.join('/') }; }
+  doc(db, ...seg) { return { type: 'doc', path: seg.join('/'), id: seg[seg.length - 1] }; }
+  _check(v, at) { if (v === undefined) throw new Error('undefined を Firestore に渡した: ' + at); if (v && typeof v === 'object') Object.keys(v).forEach(k => this._check(v[k], at + '.' + k)); }
+  _snap(path) { const has = this.docs.has(path), d = this.docs.get(path); return { id: path.split('/').pop(), exists: () => has, data: () => (has ? cloneJ(d) : undefined), metadata: { hasPendingWrites: this.pending.has(path), fromCache: this.fromCache } }; }
+  _emit(l) {
+    if (l.ref.type === 'doc') { l.next(this._snap(l.ref.path)); return; }
+    const depth = l.ref.path.split('/').length + 1, cur = new Map(), changes = [];
+    for (const [pth, d] of this.docs) if (pth.startsWith(l.ref.path + '/') && pth.split('/').length === depth) cur.set(pth, JSON.stringify(d));
+    for (const [pth, j] of cur) { if (!l.prev.has(pth)) changes.push({ type: 'added', doc: this._snap(pth) }); else if (l.prev.get(pth) !== j) changes.push({ type: 'modified', doc: this._snap(pth) }); }
+    for (const pth of l.prev.keys()) if (!cur.has(pth)) changes.push({ type: 'removed', doc: { id: pth.split('/').pop(), metadata: { hasPendingWrites: false }, data: () => undefined } });
+    l.prev = cur;
+    l.next({ docs: [...cur.keys()].map(x => this._snap(x)), docChanges: () => changes, metadata: { fromCache: this.fromCache } });
+  }
+  _emitAll() { if (!this.silent) this.listeners.slice().forEach(l => this._emit(l)); }
+  onSnapshot(ref, opt, next, err) {
+    const l = { ref, next, err, prev: new Map() }; this.listeners.push(l);
+    if (this.denied) setTimeout(() => err({ code: 'permission-denied', message: 'Missing or insufficient permissions.' }), 0);
+    else if (!this.silent) setTimeout(() => { if (this.listeners.includes(l)) this._emit(l); }, 0);
+    return () => { this.listeners = this.listeners.filter(x => x !== l); };
+  }
+  _ack(path) { return new Promise((res, rej) => { const fin = () => { this.pending.delete(path); if (this.rejectWrites) { this.docs.delete(path); this._emitAll(); rej(this.rejectWrites); } /* 実物同様、拒否された書き込みは取り消される */ else { this._emitAll(); res(); } }; if (this.online) setTimeout(fin, 0); else this.acks.push(fin); }); }
+  setDoc(ref, data) { this._check(data, ref.path); this.writes.push('set ' + ref.path); this.docs.set(ref.path, cloneJ(data)); this.pending.add(ref.path); this._emitAll(); return this._ack(ref.path); }
+  deleteDoc(ref) { this.writes.push('delete ' + ref.path); this.docs.delete(ref.path); this._emitAll(); return this._ack(ref.path); }
+  goOnline() { this.online = true; this.acks.splice(0).forEach(f => f()); }
+  remoteSet(path, data) { this.docs.set(path, cloneJ(data)); this._emitAll(); }      // 他端末からの変更
+  remoteDelete(path) { this.docs.delete(path); this._emitAll(); }
+  async getDocsFromServer(col) { if (!this.online) throw { code: 'unavailable' }; if (this.denied) throw { code: 'permission-denied' }; const depth = col.path.split('/').length + 1; return { docs: [...this.docs.keys()].filter(x => x.startsWith(col.path + '/') && x.split('/').length === depth).map(x => this._snap(x)) }; }
+  async getDocFromServer(ref) { if (!this.online) throw { code: 'unavailable' }; this.serverReads = (this.serverReads || 0) + 1; return this._snap(ref.path); }
+  writeBatch() { const ops = [], self = this; return { set(ref, data) { self._check(data, ref.path); ops.push([ref.path, data]); }, async commit() { if (ops.length > 500) throw new Error('batch が 500 件を超えた: ' + ops.length); if (!self.online) throw { code: 'unavailable' }; ops.forEach(([pth, d]) => self.docs.set(pth, cloneJ(d))); self.batches.push(ops.length); self._emitAll(); } }; }
+}
+const dayDoc = (w, r = 10) => ({ memo: '', items: [{ ex: 'bp', sets: [{ w, r, memo: '', assist: false }] }], updatedAt: 1 });
+
+group('Firebase: データ整形・同期状態・バッチ分割（純粋関数）');
+await test('toFirestore: undefined のフィールドは省く（null は残す）・元データは変更しない', () => {
+  const src = { w: 70, f: undefined, n: null, nested: { a: undefined, b: 1 }, arr: [{ x: undefined, y: 2 }, undefined, NaN] };
+  eq(F.toFirestore(src), { w: 70, n: null, nested: { b: 1 }, arr: [{ y: 2 }, null, null] }); ok('f' in src, '元データはそのまま');
+  eq(F.toFirestore({ memo: '', items: [{ ex: 'bp', sets: [{ w: null, r: 8, memo: '', assist: false }] }], updatedAt: 5 }), { memo: '', items: [{ ex: 'bp', sets: [{ w: null, r: 8, memo: '', assist: false }] }], updatedAt: 5 });
+});
+await test('toFirestore: 体組成の w / f 未入力はフィールドごと省かれる', () => { eq(F.toFirestore({ w: 72.4, f: undefined, updatedAt: 1 }), { w: 72.4, updatedAt: 1 }); eq(Object.keys(F.toFirestore(C.cleanBody({ w: '', f: '17' }))), ['f']); });
+await test('sameData: キー順・undefined の有無に左右されない', () => { ok(F.sameData({ a: 1, b: { c: 2, d: undefined } }, { b: { c: 2 }, a: 1 })); ok(!F.sameData({ a: 1 }, { a: 2 })); ok(F.sameData(undefined, null)); ok(!F.sameData(null, {})); ok(F.sameData([1, { x: 1 }], [1, { x: 1 }])); });
+await test('countPending: スナップショットの未送信 ∪ 送信中（同じドキュメントは1件）', () => { eq(F.countPending(['days/a', 'days/b'], ['days/b', 'meta/master']), 3); eq(F.countPending([], []), 0); eq(F.countPending(null, ['x']), 1); });
+await test('syncLabel / syncBadge: 同期済み・送信待ち n 件・オフライン・エラー・未ログイン', () => {
+  const st = (online, n, error) => F.calcSyncState({ online, snapshotPaths: Array.from({ length: n }, (_, i) => 'days/' + i), inflightPaths: [], error });
+  eq(F.syncLabel(st(true, 0), true), '同期済み'); eq(F.syncLabel(st(true, 3), true), '送信待ち 3 件'); eq(F.syncLabel(st(false, 0), true), 'オフライン'); eq(F.syncLabel(st(false, 2), true), 'オフライン（送信待ち 2 件）');
+  eq(F.syncLabel(st(true, 0, { code: 'permission-denied' }), true), 'エラー（権限がありません）'); eq(F.syncLabel(st(true, 0), false), '端末内に保存'); eq(F.syncLabel({ mode: 'local', online: true, pending: 0 }, true), '端末内に保存');
+  eq(F.syncLabel({ ...st(true, 0), ready: false }, true), '読み込み中…'); eq(F.syncBadge({ ...st(true, 0), ready: false }, true), 'クラウドの記録を読み込み中…');
+  eq(F.syncBadge(st(true, 0), true), '', '同期済みの時はホームに何も出さない'); eq(F.syncBadge(st(true, 2), true), '送信待ち 2'); eq(F.syncBadge(st(false, 0), true), 'オフライン'); eq(F.syncBadge(st(false, 1), true), 'オフライン・送信待ち 1'); eq(F.syncBadge(st(false, 1), false), '');
+});
+await test('chunk: 500 件ごとに分割', () => { eq(F.chunk(Array.from({ length: 1201 }, (_, i) => i)).map(a => a.length), [500, 500, 201]); eq(F.chunk([]), []); eq(F.chunk([1, 2, 3], 2), [[1, 2], [3]]); });
+await test('firestoreErrorMessage: permission-denied は原因（セキュリティルール）が分かる日本語', () => {
+  ok(F.firestoreErrorMessage({ code: 'permission-denied' }).includes('セキュリティルール')); ok(F.firestoreErrorMessage({ code: 'firestore/permission-denied' }).includes('セキュリティルール'));
+  ok(F.firestoreErrorMessage({ code: 'unavailable' }).includes('接続できません')); ok(F.firestoreErrorMessage({ code: 'weird' }).includes('weird')); ok(F.firestoreErrorMessage(null).length > 0);
+});
+await test('authErrorMessage: ポップアップブロック／キャンセル／ネットワーク／未承認ドメインを出し分け', () => {
+  ok(AU.authErrorMessage({ code: 'auth/popup-blocked' }).includes('ポップアップ')); ok(AU.authErrorMessage({ code: 'auth/popup-closed-by-user' }).includes('キャンセル')); ok(AU.authErrorMessage({ code: 'auth/cancelled-popup-request' }).includes('キャンセル'));
+  ok(AU.authErrorMessage({ code: 'auth/network-request-failed' }).includes('ネットワーク')); ok(AU.authErrorMessage({ code: 'auth/unauthorized-domain' }).includes('Firebase の承認済みドメインに このサイトを追加してください')); ok(AU.authErrorMessage({ code: 'auth/xyz' }).includes('auth/xyz'));
+});
+
+group('Firebase: 移行計画（純粋関数）');
+const LOC = (days, body = {}, hasMaster = true) => ({ days, body, master: { parts: [], exercises: [] }, settings: { step: 2.5, timerSec: 90 }, hasMaster });
+await test('クラウドが空 ＆ 端末内に記録あり → 全部アップロード（マスタ・設定も）', () => {
+  const pl = M.planMigration({ dayKeys: [], bodyKeys: [], hasMaster: false, hasSettings: false }, LOC({ '2026-09-02': dayDoc(1), '2026-09-01': dayDoc(2) }, { '2026-09-01': { w: 70 } }));
+  eq(pl, { mode: 'upload', days: ['2026-09-01', '2026-09-02'], bodies: ['2026-09-01'], master: { parts: [], exercises: [] }, settings: true }); ok(M.migrationMessage(pl).includes('2日分')); ok(M.migrationMessage(pl).includes('アップロード'));
+});
+await test('クラウドにデータあり → クラウドに無い日付だけ追加（上書きしない・master/settings はクラウド優先）', () => {
+  const pl = M.planMigration({ dayKeys: ['2026-09-01'], bodyKeys: [], hasMaster: true, hasSettings: true }, LOC({ '2026-09-01': dayDoc(1), '2026-09-03': dayDoc(2), '2026-09-02': dayDoc(3) }, { '2026-09-01': { w: 70 } }));
+  eq(pl, { mode: 'merge', days: ['2026-09-02', '2026-09-03'], bodies: ['2026-09-01'], master: null, settings: false }); ok(M.migrationMessage(pl).includes('この端末だけにある日（2日分'));
+});
+await test('端末内に記録なし／追加するものが無い → 何もしない', () => {
+  eq(M.planMigration({ dayKeys: ['2026-09-01'], bodyKeys: [] }, LOC({})).mode, 'none'); eq(M.planMigration({ dayKeys: [], bodyKeys: [] }, LOC({})).mode, 'none');
+  eq(M.planMigration({ dayKeys: ['2026-09-01'], bodyKeys: ['2026-09-01'] }, LOC({ '2026-09-01': dayDoc(1) }, { '2026-09-01': { w: 1 } })).mode, 'none');
+});
+await test('アップロード時: 端末内のマスタが未保存（初期値のまま）なら送らない／クラウドに既にあるマスタ・設定は触らない', () => {
+  eq(M.planMigration({ dayKeys: [], bodyKeys: [], hasMaster: false, hasSettings: false }, LOC({ '2026-09-01': dayDoc(1) }, {}, false)).master, null);
+  const pl = M.planMigration({ dayKeys: [], bodyKeys: [], hasMaster: true, hasSettings: true }, LOC({ '2026-09-01': dayDoc(1) })); eq(pl.master, null); eq(pl.settings, false);
+});
+await test('migrationOps: パスとデータ（undefined なし）', () => {
+  const local = LOC({ '2026-09-01': dayDoc(1) }, { '2026-09-01': { w: 70, f: undefined, updatedAt: 1 } });
+  const ops = M.migrationOps({ mode: 'upload', days: ['2026-09-01'], bodies: ['2026-09-01'], master: local.master, settings: true }, local);
+  eq(ops.map(o => o.path.join('/')), ['days/2026-09-01', 'body/2026-09-01', 'meta/master', 'meta/settings']); eq(ops[1].data, { w: 70, updatedAt: 1 });
+});
+await test('runMigration: 500 件ごとの writeBatch に分割して投入', async () => {
+  const fs = new FakeFs(), ops = Array.from({ length: 1201 }, (_, i) => ({ path: ['days', C.addDaysKey('2020-01-01', i)], data: dayDoc(i) }));
+  eq(await M.runMigration(fs, {}, 'u1', ops), 1201); eq(fs.batches, [500, 500, 201]); eq([...fs.docs.keys()].filter(k => k.startsWith('users/u1/days/')).length, 1201);
+});
+await test('inspectCloud: サーバーの内容を確認／オフラインなら例外（次回に持ち越し）', async () => {
+  const fs = new FakeFs(); fs.docs.set('users/u1/days/2026-09-01', dayDoc(1)); fs.docs.set('users/u1/meta/master', { parts: [], exercises: [] }); fs.docs.set('users/u2/days/2026-01-01', dayDoc(1));
+  eq(await M.inspectCloud(fs, {}, 'u1'), { dayKeys: ['2026-09-01'], bodyKeys: [], hasMaster: true, hasSettings: false, master: { parts: [], exercises: [] } });
+  fs.online = false; let threw = false; try { await M.inspectCloud(fs, {}, 'u1'); } catch (e) { threw = true; } ok(threw);
+});
+await test('createFlags: 移行済みフラグは uid ごと、dirty は移行確認で解除', () => {
+  const mem = new MemStorage(), fl = M.createFlags(mem); ok(!fl.isMigrated('u1')); ok(!fl.everMigrated()); fl.markLocalDirty(); ok(fl.isLocalDirty());
+  fl.markMigrated('u1'); ok(fl.isMigrated('u1')); ok(!fl.isMigrated('u2')); ok(fl.everMigrated()); ok(!fl.isLocalDirty());
+  const broken = M.createFlags(null); ok(!broken.isMigrated('u1')); broken.markMigrated('u1'); ok(!broken.isLocalDirty(), 'ストレージが無くても落ちない');
+});
+
+group('Firebase: FirebaseAdapter ＋ store（Firestore モック）');
+async function mkCloudStore(fs = new FakeFs(), opt = {}) {
+  const errors = [], ad = new F.FirebaseAdapter(fs, {}, 'u1', { onError: e => errors.push(e), timeoutMs: 150, isOnline: () => fs.online, events: null, doc: null, storage: new MemStorage(), backoff: [60000], ...opt });
+  const s = St.createStore(ad); await s.init(); return { s, fs, ad, errors };
+}
+await test('init: 最初のスナップショットが揃ったら完了し、Firestore の内容が読める（正規化も通る）', async () => {
+  const fs = new FakeFs(); fs.docs.set('users/u1/days/2026-09-01', { memo: 'm', items: [{ ex: 'bp', sets: [{ w: 70, r: 10 }, { w: 80, r: 0 }] }], updatedAt: 9 }); fs.docs.set('users/u1/body/2026-09-01', { w: 70.04 });
+  fs.docs.set('users/u1/meta/settings', { step: 5, timerSec: 120 }); fs.docs.set('users/u2/days/2026-09-02', dayDoc(1));
+  const { s } = await mkCloudStore(fs);
+  eq(Object.keys(s.days()), ['2026-09-01'], '他人(u2)のデータは読まない'); eq(s.day('2026-09-01').items[0].sets, [{ w: 70, r: 10, memo: '', assist: false }]); eq(s.body('2026-09-01').w, 70); eq(s.settings().step, 5); eq(s.master().parts.length, 6, 'master が無ければ初期マスタ');
+});
+await test('init: スナップショットが来なくても（オフライン等）タイムアウトで完了する', async () => { const fs = new FakeFs(); fs.silent = true; const t0 = performance.now(); const { s } = await mkCloudStore(fs); ok(performance.now() - t0 < 1500); eq(s.days(), {}); });
+await test('書き込みは await しない: オフラインでも saveDay がすぐ解決し、メモリには即反映', async () => {
+  const { s, fs } = await mkCloudStore(); fs.online = false;
+  const r = await Promise.race([s.saveDay('2026-09-17', dayDoc(70)), tick(300).then(() => 'timeout')]); eq(r, true); eq(s.day('2026-09-17').items[0].sets[0].w, 70); eq(fs.writes, ['set users/u1/days/2026-09-17']);
+  eq(s.syncState().pending, 1); eq(s.syncState().online, false); eq(F.syncLabel(s.syncState(), true), 'オフライン（送信待ち 1 件）');
+  fs.goOnline(); await tick(); eq(s.syncState().pending, 0); eq(F.syncLabel(s.syncState(), true), '同期済み');
+});
+await test('undefined を Firestore に渡さない（体組成 w だけ・f だけ）／空になった日・体組成は deleteDoc', async () => {
+  const { s, fs } = await mkCloudStore();
+  await s.saveBody('2026-09-17', { w: '72.4', f: '' }); await s.saveBody('2026-09-16', { w: '', f: '17' }); await s.saveDay('2026-09-17', dayDoc(70)); await tick();
+  eq(Object.keys(fs.docs.get('users/u1/body/2026-09-17')).sort(), ['updatedAt', 'w']); eq(Object.keys(fs.docs.get('users/u1/body/2026-09-16')).sort(), ['f', 'updatedAt']);
+  await s.saveDay('2026-09-17', { memo: '', items: [] }); await s.saveBody('2026-09-17', { w: '', f: '' }); await tick();
+  ok(!fs.docs.has('users/u1/days/2026-09-17')); ok(!fs.docs.has('users/u1/body/2026-09-17')); ok(fs.writes.includes('delete users/u1/days/2026-09-17')); ok(fs.writes.includes('delete users/u1/body/2026-09-17'));
+});
+await test('自分の書き込みの折り返し（hasPendingWrites・送信完了）では onChange(remote) を出さない＝入力中に再描画しない', async () => {
+  const { s, fs } = await mkCloudStore(); const ev = []; s.onChange(e => ev.push(e.origin + ':' + e.what));
+  await s.saveDay('2026-09-17', dayDoc(70)); await s.saveMaster(s.master()); await s.saveSettings({ step: 5 }); await tick(30);
+  eq(ev, ['local:days', 'local:master', 'local:settings']);
+  fs.online = false; await s.saveDay('2026-09-17', dayDoc(72.5)); await tick(); fs.goOnline(); await tick(30); eq(ev.filter(x => x.startsWith('remote')), []);
+});
+await test('他端末からの変更は onChange(remote) で通知され、内容が反映される（追加・変更・削除・マスタ）', async () => {
+  const { s, fs } = await mkCloudStore(); const ev = []; s.onChange(e => ev.push(e.origin));
+  fs.remoteSet('users/u1/days/2026-09-10', dayDoc(60)); await tick(); eq(s.day('2026-09-10').items[0].sets[0].w, 60); eq(ev, ['remote']);
+  fs.remoteSet('users/u1/days/2026-09-10', dayDoc(65)); await tick(); eq(s.day('2026-09-10').items[0].sets[0].w, 65);
+  fs.remoteDelete('users/u1/days/2026-09-10'); await tick(); eq(s.day('2026-09-10'), null);
+  const m = D.defaultMaster(); m.exercises.push({ id: 'x9', part: 'chest', name: '他端末で追加' }); fs.remoteSet('users/u1/meta/master', m); await tick(); eq(s.master().exercises.length, 22); eq(ev.length, 4);
+});
+await test('手元に未送信の入力がある日のスナップショットでは、手元の値を優先する', async () => {
+  const { s, fs } = await mkCloudStore(); fs.online = false; await s.saveDay('2026-09-17', dayDoc(80)); fs._emitAll(); await tick(); eq(s.day('2026-09-17').items[0].sets[0].w, 80);
+});
+await test('権限エラー（セキュリティルール未適用）: 起動は続き、onError 通知と syncState.error', async () => {
+  const fs = new FakeFs(); fs.denied = true; const { s, errors } = await mkCloudStore(fs);
+  eq(s.days(), {}); ok(errors.length >= 1); eq(errors[0].code, 'permission-denied'); eq(s.syncState().error.code, 'permission-denied'); eq(F.syncLabel(s.syncState(), true), 'エラー（権限がありません）');
+});
+await test('書き込みが拒否された時も例外にせず onError で通知', async () => {
+  const { s, fs, errors } = await mkCloudStore(); fs.rejectWrites = { code: 'permission-denied' }; eq(await s.saveDay('2026-09-17', dayDoc(1)), true); await tick(30); eq(errors.map(e => e.code), ['permission-denied']); eq(s.syncState().pending, 0);
+});
+await test('useAdapter: 端末内 → クラウド → 端末内 と切り替えられ、古いアダプタの通知は無視される', async () => {
+  const mem = new MemStorage(), s = St.createStore(new St.LocalAdapter(mem, null)); await s.init(); await s.saveDay('2026-09-01', dayDoc(10)); eq(s.syncState().mode, 'local');
+  const fs = new FakeFs(); fs.docs.set('users/u1/days/2026-09-05', dayDoc(50)); const ad = new F.FirebaseAdapter(fs, {}, 'u1', { timeoutMs: 150, isOnline: () => true, events: null, doc: null, storage: new MemStorage(), backoff: [60000] });
+  const ev = []; s.onChange(e => ev.push(e.origin)); let syncs = 0; s.onSync(() => syncs++);
+  await s.useAdapter(ad); eq(Object.keys(s.days()), ['2026-09-05']); eq(s.syncState().mode, 'cloud'); ok(ev.includes('remote')); ok(syncs >= 1);
+  await s.saveDay('2026-09-06', dayDoc(60)); await tick(); ok(fs.docs.has('users/u1/days/2026-09-06')); eq(Object.keys(mem.json('won-days')), ['2026-09-01'], 'ログイン中は端末内データを書き換えない');
+  await s.useAdapter(new St.LocalAdapter(mem, null)); eq(Object.keys(s.days()), ['2026-09-01']); eq(fs.listeners.length, 0, 'ログアウトで onSnapshot を解除');
+  const n = ev.length; fs.remoteSet('users/u1/days/2026-09-07', dayDoc(70)); await tick(); eq(ev.length, n); eq(s.day('2026-09-07'), null);
+});
+
+group('Firebase: ログイン〜移行〜ログアウトの流れ（Auth / Firestore モック）');
+function mkCloud({ user = null, fs = new FakeFs(), mem = new MemStorage(), loadFail = false, popup = null } = {}) {
+  const calls = [], toasts = [], confirms = [], authObj = { currentUser: user }, ls = [], bus = new EventTarget();
+  const sdk = { app: { initializeApp: c => ({ c }) }, fs,
+    auth: { getAuth: () => authObj, GoogleAuthProvider: class { setCustomParameters(x) { calls.push('params:' + x.prompt); } },
+      signInWithPopup: (a, pr) => { calls.push('popup'); if (popup) return popup(); const u = { uid: 'u1', email: 'me@example.com', displayName: 'Me' }; return Promise.resolve().then(() => { authObj.currentUser = u; ls.forEach(f => f(u)); return { user: u }; }); },
+      signOut: () => { calls.push('signOut'); authObj.currentUser = null; ls.forEach(f => f(null)); return Promise.resolve(); },
+      onAuthStateChanged: (a, cb) => { ls.push(cb); setTimeout(() => cb(authObj.currentUser), 0); return () => {}; } } };
+  const store = St.createStore(new St.LocalAdapter(mem, null));
+  const cloud = CL.createCloud({ store, loadSdk: () => (loadFail ? Promise.reject(new Error('offline')) : Promise.resolve(sdk)), createAuth: AU.createAuth, config: CFG.firebaseConfig,
+    toast: m => toasts.push(m), confirm: (o, okCb) => confirms.push({ o, ok: okCb }), busy: () => false, makeLocalAdapter: () => new St.LocalAdapter(mem, null),
+    readLocal: async () => St.normalizeAll(await new St.LocalAdapter(mem, null).load()), storage: mem, events: bus, doc: null, adapterTimeoutMs: 150, sdkTimeoutMs: 500, backoff: [60000] });
+  const settle = async () => { for (let i = 0; i < 4; i++) { await tick(20); await cloud.idle(); } };
+  return { cloud, store, fs, mem, calls, toasts, confirms, bus, settle };
+}
+await test('未ログインで起動: 端末内保存のまま・ログイン案内カードを出す・「あとで」で以後は出さない', async () => {
+  const x = mkCloud(); await x.store.init(); await x.cloud.start(); eq(x.cloud.state(), { sdk: 'ready', user: null, mode: 'local', switching: false, signingIn: false }); ok(x.cloud.showLoginCard()); ok(!x.cloud.hadLogin());
+  x.cloud.loginLater(); ok(!x.cloud.showLoginCard()); eq(x.mem.getItem('won-login-later'), '1'); eq(x.store.syncState().mode, 'local');
+});
+await test('signIn: タップのハンドラ内で同期的に signInWithPopup を呼ぶ（await を挟まない）→ ログイン後はクラウド保存に切替', async () => {
+  const x = mkCloud(); x.fs.docs.set('users/u1/days/2026-09-05', dayDoc(50)); await x.store.init(); await x.cloud.start();
+  x.cloud.signIn(); eq(x.calls.filter(c => c === 'popup'), ['popup'], 'signIn() から戻った時点で呼び出し済み');
+  await x.settle(); eq(x.cloud.state().mode, 'cloud'); eq(x.cloud.state().user.email, 'me@example.com'); eq(Object.keys(x.store.days()), ['2026-09-05']); ok(x.cloud.hadLogin()); ok(!x.cloud.showLoginCard()); ok(x.toasts.some(t => t.includes('me@example.com')));
+});
+await test('SDK の準備前にログインを押した時は案内だけ出し、ポップアップは開かない', async () => { const x = mkCloud(); await x.store.init(); x.cloud.signIn(); eq(x.calls.filter(c => c === 'popup'), []); ok(x.toasts[0].includes('準備中')); });
+await test('SDK 読み込み失敗: reject せず端末内保存で起動、トーストで通知', async () => {
+  const x = mkCloud({ loadFail: true }); await x.store.init(); await x.store.saveDay('2026-09-01', dayDoc(1)); await x.cloud.start();
+  eq(x.cloud.state().sdk, 'failed'); eq(x.cloud.state().mode, 'local'); ok(x.toasts.some(t => t.includes('同期機能を読み込めませんでした'))); eq(Object.keys(x.store.days()), ['2026-09-01']);
+  x.cloud.signIn(); ok(x.toasts.some(t => t.includes('オフラインのためログインできません')));
+});
+await test('ログイン済みで起動（認証状態の復元）→ 移行: クラウドが空なら確認のうえ全件アップロード、端末内データは残す', async () => {
+  const mem = new MemStorage(), pre = St.createStore(new St.LocalAdapter(mem, null)); await pre.init(); await pre.saveDay('2026-09-01', dayDoc(10)); await pre.saveDay('2026-09-02', dayDoc(20)); await pre.saveBody('2026-09-01', { w: 70 });
+  const m = pre.master(); await pre.saveMaster({ ...m, exercises: m.exercises.concat([{ id: 'x1', part: 'chest', name: '自作種目' }]) });
+  const x = mkCloud({ user: { uid: 'u1', email: 'me@example.com' }, mem }); await x.store.init(); await x.cloud.start(); await x.settle();
+  eq(x.cloud.state().mode, 'cloud'); eq(x.confirms.length, 1); ok(x.confirms[0].o.msg.includes('この端末の記録（2日分')); eq([...x.fs.docs.keys()].length, 0, '確認前は書き込まない');
+  await x.confirms[0].ok(); await x.settle();
+  eq([...x.fs.docs.keys()].sort(), ['users/u1/body/2026-09-01', 'users/u1/days/2026-09-01', 'users/u1/days/2026-09-02', 'users/u1/meta/master', 'users/u1/meta/settings']);
+  eq(x.fs.docs.get('users/u1/meta/master').exercises.length, 22); eq(Object.keys(x.store.days()).sort(), ['2026-09-01', '2026-09-02'], 'アップロード後はクラウドのデータとして見える'); eq(x.store.master().exercises.length, 22);
+  eq(Object.keys(mem.json('won-days')).length, 2, '端末内データ（won-*）は消さない'); ok(M.createFlags(mem).isMigrated('u1'));
+});
+await test('移行: クラウドに既にデータあり → クラウドに無い日付だけ追加（同じ日は上書きしない）', async () => {
+  const mem = new MemStorage(), pre = St.createStore(new St.LocalAdapter(mem, null)); await pre.init(); await pre.saveDay('2026-09-01', dayDoc(10)); await pre.saveDay('2026-09-03', dayDoc(30));
+  const fs = new FakeFs(); fs.docs.set('users/u1/days/2026-09-01', dayDoc(999)); fs.docs.set('users/u1/meta/master', D.defaultMaster());
+  const x = mkCloud({ user: { uid: 'u1', email: 'a@b' }, mem, fs }); await x.store.init(); await x.cloud.start(); await x.settle();
+  ok(x.confirms[0].o.msg.includes('この端末だけにある日（1日分')); await x.confirms[0].ok(); await x.settle();
+  eq(x.fs.docs.get('users/u1/days/2026-09-01').items[0].sets[0].w, 999); ok(x.fs.docs.has('users/u1/days/2026-09-03')); eq(x.store.day('2026-09-03').items[0].sets[0].w, 30); ok(!x.fs.docs.has('users/u1/meta/settings'), '設定はクラウド優先（送らない）');
+});
+await test('移行: 辞退してもフラグを記録し毎回は聞かない／master が無い初回は初期マスタを書き込む', async () => {
+  const mem = new MemStorage(), pre = St.createStore(new St.LocalAdapter(mem, null)); await pre.init(); await pre.saveDay('2026-09-01', dayDoc(10));
+  const x = mkCloud({ user: { uid: 'u1', email: 'a@b' }, mem }); await x.store.init(); await x.cloud.start(); await x.settle();
+  x.confirms[0].o.onCancel(); await x.settle(); ok(M.createFlags(mem).isMigrated('u1')); ok(!x.fs.docs.has('users/u1/days/2026-09-01')); eq(x.fs.docs.get('users/u1/meta/master').parts.length, 6);
+  const y = mkCloud({ user: { uid: 'u1', email: 'a@b' }, mem, fs: x.fs }); await y.store.init(); await y.cloud.start(); await y.settle(); eq(y.confirms.length, 0);
+  y.cloud.migrateNow(); await y.settle(); eq(y.confirms.length, 1, '設定画面からは手動でやり直せる');
+});
+await test('移行: 端末内に記録が無ければ確認は出さず、初期マスタだけ書き込む', async () => {
+  const x = mkCloud({ user: { uid: 'u1', email: 'a@b' } }); await x.store.init(); await x.cloud.start(); await x.settle();
+  eq(x.confirms.length, 0); eq(x.fs.docs.get('users/u1/meta/master').exercises.length, 21); ok(M.createFlags(x.mem).isMigrated('u1'));
+});
+await test('移行: オフラインなら確認せず次回に持ち越し（online 復帰で再試行）', async () => {
+  const mem = new MemStorage(), pre = St.createStore(new St.LocalAdapter(mem, null)); await pre.init(); await pre.saveDay('2026-09-01', dayDoc(10));
+  const fs = new FakeFs(); fs.online = false; const x = mkCloud({ user: { uid: 'u1', email: 'a@b' }, mem, fs }); await x.store.init(); await x.cloud.start(); await x.settle();
+  eq(x.cloud.state().mode, 'cloud', 'オフラインでもログイン状態で起動'); eq(x.confirms.length, 0); ok(!M.createFlags(mem).isMigrated('u1'));
+  fs.goOnline(); x.bus.dispatchEvent(new Event('online')); await x.settle(); eq(x.confirms.length, 1);
+});
+await test('ログアウト: 確認シート → signOut → 端末内保存に切替（クラウドのデータは消さない）', async () => {
+  const mem = new MemStorage(), pre = St.createStore(new St.LocalAdapter(mem, null)); await pre.init(); await pre.saveDay('2026-08-01', dayDoc(5)); M.createFlags(mem).markMigrated('u1');
+  const fs = new FakeFs(); fs.docs.set('users/u1/days/2026-09-05', dayDoc(50)); fs.docs.set('users/u1/meta/master', D.defaultMaster());
+  const x = mkCloud({ user: { uid: 'u1', email: 'a@b' }, mem, fs }); await x.store.init(); await x.cloud.start(); await x.settle(); eq(Object.keys(x.store.days()), ['2026-09-05']);
+  x.cloud.signOut(); eq(x.confirms.length, 1); ok(x.confirms[0].o.msg.includes('クラウドの記録は消えません')); eq(x.calls.includes('signOut'), false, '確認前は signOut しない');
+  x.confirms[0].ok(); await x.settle(); eq(x.cloud.state(), { sdk: 'ready', user: null, mode: 'local', switching: false, signingIn: false }); eq(Object.keys(x.store.days()), ['2026-08-01']); ok(fs.docs.has('users/u1/days/2026-09-05')); ok(!x.cloud.hadLogin());
+  await x.store.saveDay('2026-08-02', dayDoc(6)); ok(M.createFlags(mem).isLocalDirty(), 'ログアウト中に端末内へ書いたら、次回ログイン時にもう一度移行を確認する');
+});
+await test('権限エラー時は原因が分かる日本語トースト（同じ内容は連続で出さない）', async () => {
+  const fs = new FakeFs(); fs.denied = true; const x = mkCloud({ user: { uid: 'u1', email: 'a@b' }, fs }); await x.store.init(); await x.cloud.start(); await x.settle();
+  const hits = x.toasts.filter(t => t.includes('セキュリティルール')); eq(hits.length, 1); eq(x.cloud.state().mode, 'cloud');
+});
+
+group('v1.1.1: クラウドのデータを壊さない（F1〜F5 の再現テスト）');
+const cloudDay = { memo: '', items: [{ ex: 'bp', sets: [{ w: 70, r: 10, memo: '', assist: false }, { w: 75, r: 8, memo: '', assist: false }] }, { ex: 'sq', sets: [{ w: 90, r: 5, memo: '', assist: false }] }], updatedAt: 5 };
+await test('isTrustedSnapshot: サーバー由来は信頼／キャッシュ由来は「この端末で同期済み」の時だけ（前回中身があったのに空なら信頼しない）', () => {
+  ok(F.isTrustedSnapshot({ fromCache: false, size: 0, synced: null })); ok(!F.isTrustedSnapshot({ fromCache: true, size: 0, synced: null })); ok(!F.isTrustedSnapshot({ fromCache: true, size: 9, synced: null }));
+  ok(F.isTrustedSnapshot({ fromCache: true, size: 3, synced: 5 })); ok(!F.isTrustedSnapshot({ fromCache: true, size: 0, synced: 5 })); ok(F.isTrustedSnapshot({ fromCache: true, size: 0, synced: 0 }));
+});
+await test('F1: タイムアウト後に遅れて届いた最初のスナップショットも store に通知される。届くまでは書き込めず、クラウドの種目は消えない', async () => {
+  const fs = new FakeFs(); fs.docs.set('users/u1/days/2026-09-17', cloudDay); fs.docs.set('users/u1/body/2026-09-17', { w: 70, f: 20, updatedAt: 1 }); fs.silent = true;
+  const { s } = await mkCloudStore(fs); const ev = [], blocked = []; s.onChange(e => ev.push(e.origin + ':' + e.what)); s.onError(e => blocked.push(e.code));
+  eq(s.day('2026-09-17'), null, 'まだ届いていない'); eq(s.syncState().ready, false);
+  eq(await s.saveDay('2026-09-17', { memo: '体調よし', items: [] }), false, 'メモだけの保存は拒否'); eq(await s.patchBody('2026-09-17', { w: '71' }), false); eq(await s.saveMaster(s.master()), false); eq(await s.saveSettings({ step: 5 }), false);
+  eq(blocked, ['not-ready', 'not-ready', 'not-ready', 'not-ready']); eq(fs.writes, [], 'Firestore には何も書かない'); eq(s.day('2026-09-17'), null, '拒否時はメモリ上のデータも変えない');
+  eq(fs.docs.get('users/u1/days/2026-09-17').items.length, 2, 'クラウドの種目は無事');
+  fs.silent = false; fs._emitAll(); await tick(30);
+  ok(ev.includes('remote:ready'), '遅れて届いたら通知'); eq(s.day('2026-09-17').items.length, 2); eq(s.body('2026-09-17').f, 20); eq(s.syncState().ready, true);
+  eq(await s.saveDay('2026-09-17', { memo: '体調よし', items: s.day('2026-09-17').items }), true); await tick(); eq(fs.docs.get('users/u1/days/2026-09-17').items.length, 2); eq(fs.docs.get('users/u1/days/2026-09-17').memo, '体調よし');
+});
+await test('F1: キャッシュ由来（未同期の端末）の空スナップショットでは書き込ませない → サーバー由来が届いたら書ける', async () => {
+  const fs = new FakeFs(); fs.fromCache = true; const { s } = await mkCloudStore(fs); const blocked = []; s.onError(e => blocked.push(e.code));
+  eq(s.syncState().ready, false); eq(await s.saveDay('2026-09-17', dayDoc(1)), false); eq(blocked, ['not-ready']); eq(fs.writes, []);
+  fs.docs.set('users/u1/days/2026-09-17', cloudDay); fs.fromCache = false; fs._emitAll(); await tick(30);
+  eq(s.syncState().ready, true); eq(s.day('2026-09-17').items.length, 2);
+});
+await test('F1: この端末で同期済みなら、オフライン起動（キャッシュ由来）でも書ける／前回は中身があったのにキャッシュが空なら書かせない', async () => {
+  const mem = new MemStorage(), fs = new FakeFs(); fs.docs.set('users/u1/days/2026-09-01', dayDoc(1));
+  const a = await mkCloudStore(fs, { storage: mem }); eq(a.s.syncState().ready, true); a.ad.dispose(); eq(JSON.parse(mem.getItem('won-synced')).u1.days, 1);
+  fs.fromCache = true; fs.online = false; const b = await mkCloudStore(fs, { storage: mem }); eq(b.s.syncState().ready, true, '同期済みの永続キャッシュは信頼'); eq(await b.s.saveDay('2026-09-02', dayDoc(2)), true); b.ad.dispose();
+  const fs2 = new FakeFs(); fs2.fromCache = true; const c2 = await mkCloudStore(fs2, { storage: mem }); eq(c2.ad.writable('days'), false, '前回1件あったのに空 → メモリキャッシュ等とみなし信頼しない'); eq(await c2.s.saveDay('2026-09-01', dayDoc(9)), false);
+});
+await test('F2: アダプタ以外の経路の書き込み（移行の writeBatch・別タブの未送信書き込み）も一覧に取り込まれる', async () => {
+  const { s, fs } = await mkCloudStore(); const ev = []; s.onChange(e => ev.push(e.origin));
+  await M.runMigration(fs, {}, 'u1', [{ path: ['days', '2026-09-01'], data: dayDoc(10) }, { path: ['days', '2026-09-02'], data: dayDoc(20) }, { path: ['body', '2026-09-01'], data: { w: 70, updatedAt: 1 } }]); await tick(30);
+  eq(Object.keys(s.days()).sort(), ['2026-09-01', '2026-09-02'], '移行直後に画面（store）へ出る'); eq(s.body('2026-09-01').w, 70); ok(ev.includes('remote'));
+  fs.docs.set('users/u1/days/2026-09-03', dayDoc(30)); fs.pending.add('users/u1/days/2026-09-03'); fs._emitAll(); await tick(); eq(s.day('2026-09-03').items[0].sets[0].w, 30, '別タブの未送信書き込み（hasPendingWrites）も取り込む');
+  fs.pending.delete('users/u1/days/2026-09-03'); fs._emitAll(); await tick(); eq(s.day('2026-09-03').items[0].sets[0].w, 30, '確定（メタデータだけの変化）後も残る');
+  const d = s.day('2026-09-01'); await s.saveDay('2026-09-01', { memo: 'メモ追記', items: d.items }); await tick(); eq(fs.docs.get('users/u1/days/2026-09-01').items.length, 1, '移行した日にメモを足しても種目は消えない');
+});
+await test('F3: 保存先の切替中は書き込めない（表示は端末内・書き込み先はクラウド、というズレを作らない）', async () => {
+  const mem = new MemStorage(), s = St.createStore(new St.LocalAdapter(mem, null)); await s.init(); await s.saveDay('2026-09-17', dayDoc(10));
+  const fs = new FakeFs(); fs.docs.set('users/u1/days/2026-09-17', cloudDay); fs.silent = true;
+  const ad = new F.FirebaseAdapter(fs, {}, 'u1', { timeoutMs: 200, isOnline: () => true, events: null, doc: null, storage: new MemStorage(), backoff: [60000] }); const blocked = []; s.onError(e => blocked.push(e.code));
+  const sw = s.useAdapter(ad); ok(s.isSwitching()); eq(await s.saveDay('2026-09-17', { memo: '切替中の入力', items: s.day('2026-09-17').items }), false); eq(blocked, ['switching']); eq(fs.writes, []); eq(mem.json('won-days')['2026-09-17'].memo, '', '端末内データも書き換えない');
+  await sw; ok(!s.isSwitching()); eq(await s.saveDay('2026-09-17', dayDoc(10)), false, '切替後もクラウドを把握できるまでは書けない'); eq(blocked, ['switching', 'not-ready']); eq(fs.docs.get('users/u1/days/2026-09-17').items.length, 2);
+});
+await test('体組成は変更した項目だけを書く（patchBody）: 触っていない w / f を消さない・空にした項目だけ消す', async () => {
+  const fs = new FakeFs(); fs.docs.set('users/u1/body/2026-09-17', { w: 70, f: 20, updatedAt: 1 }); const { s } = await mkCloudStore(fs);
+  await s.patchBody('2026-09-17', { w: '71.5' }); await tick(); eq(fs.docs.get('users/u1/body/2026-09-17').f, 20, 'f は残る'); eq(fs.docs.get('users/u1/body/2026-09-17').w, 71.5);
+  await s.patchBody('2026-09-17', { f: '' }); await tick(); ok(!('f' in fs.docs.get('users/u1/body/2026-09-17'))); eq(fs.docs.get('users/u1/body/2026-09-17').w, 71.5);
+  await s.patchBody('2026-09-17', { w: '' }); await tick(); ok(!fs.docs.has('users/u1/body/2026-09-17'), '両方空になったら削除'); await s.patchBody('2026-09-18', {}); await tick(); ok(!fs.docs.has('users/u1/body/2026-09-18'));
+});
+await test('F4: mergeMaster は端末内にしか無い種目・部位を ID で追加（既存は上書きしない・部位が無い種目は部位も追加）', () => {
+  const cloudM = { parts: [{ id: 'chest', name: '胸（クラウドで改名）', color: '#111111' }], exercises: [{ id: 'bp', part: 'chest', name: 'ベンチ（クラウド）' }], updatedAt: 1 };
+  const localM = { parts: [{ id: 'chest', name: '胸', color: '#E07A3F' }, { id: 'xp1', name: '有酸素', color: '#5B9E3A' }, { id: 'xp2', name: '空の部位', color: '#3AA6B9', hidden: true }], exercises: [{ id: 'bp', part: 'chest', name: 'ベンチプレス' }, { id: 'x1', part: 'xp1', name: 'ランニング' }, { id: 'x2', part: 'chest', name: 'ケーブルフライ', hidden: true }] };
+  const r = M.mergeMaster(cloudM, localM); eq(r.added, 4); eq(r.master.parts.map(p => p.id), ['chest', 'xp1', 'xp2']); eq(r.master.parts[0].name, '胸（クラウドで改名）'); eq(r.master.exercises.map(e => e.id), ['bp', 'x1', 'x2']); eq(r.master.exercises[0].name, 'ベンチ（クラウド）'); eq(r.master.exercises[2].hidden, true);
+  eq(M.mergeMaster(cloudM, { parts: cloudM.parts, exercises: cloudM.exercises }).added, 0); eq(cloudM.exercises.length, 1, '元データは変更しない'); eq(M.mergeMaster(null, localM).master.exercises.length, 3);
+  const pl = M.planMigration({ dayKeys: ['2026-01-01'], bodyKeys: [], hasMaster: true, hasSettings: true, master: cloudM }, { days: { '2026-09-01': dayDoc(1) }, body: {}, master: localM, settings: {}, hasMaster: true }); eq(pl.mode, 'merge'); eq(pl.master.exercises.length, 3);
+});
+await test('F4: 移行（クラウドにマスタあり）で端末内のカスタム種目がクラウドのマスタに追加され、「（不明な種目）」にならない', async () => {
+  const mem = new MemStorage(), pre = St.createStore(new St.LocalAdapter(mem, null)); await pre.init(); const m = pre.master(); await pre.saveMaster({ ...m, parts: m.parts.concat([{ id: 'xp1', name: '有酸素', color: '#5B9E3A' }]), exercises: m.exercises.concat([{ id: 'x1', part: 'xp1', name: 'ランニング' }]) });
+  await pre.saveDay('2026-09-03', { memo: '', items: [{ ex: 'x1', sets: [{ w: 0, r: 30, memo: '', assist: false }] }] });
+  const fs = new FakeFs(), cm = D.defaultMaster(); cm.exercises[0].name = 'ベンチ（クラウドで改名）'; fs.docs.set('users/u1/meta/master', cm); fs.docs.set('users/u1/days/2026-09-01', dayDoc(1));
+  const x = mkCloud({ user: { uid: 'u1', email: 'a@b' }, mem, fs }); await x.store.init(); await x.cloud.start(); await x.settle(); await x.confirms[0].ok(); await x.settle();
+  const cmAfter = fs.docs.get('users/u1/meta/master'); ok(cmAfter.exercises.some(e => e.id === 'x1')); ok(cmAfter.parts.some(pp => pp.id === 'xp1')); eq(cmAfter.exercises[0].name, 'ベンチ（クラウドで改名）', '既存は上書きしない');
+  ok(x.store.master().exercises.some(e => e.id === 'x1'), 'store のマスタにも反映'); eq(x.store.day('2026-09-03').items[0].ex, 'x1', '移行した日が store に出る（F2）');
+});
+await test('移行 merge: 確認〜実行の間に他端末が同じ日を書いていたら、その日は書かない（実行直前にサーバーを再確認）', async () => {
+  const mem = new MemStorage(), pre = St.createStore(new St.LocalAdapter(mem, null)); await pre.init(); await pre.saveDay('2026-09-03', dayDoc(30)); await pre.saveDay('2026-09-04', dayDoc(40));
+  const fs = new FakeFs(); fs.docs.set('users/u1/days/2026-09-01', dayDoc(1)); fs.docs.set('users/u1/meta/master', D.defaultMaster());
+  const x = mkCloud({ user: { uid: 'u1', email: 'a@b' }, mem, fs }); await x.store.init(); await x.cloud.start(); await x.settle(); ok(x.confirms[0].o.msg.includes('2日分'));
+  fs.remoteSet('users/u1/days/2026-09-03', dayDoc(333)); await x.confirms[0].ok(); await x.settle();
+  eq(fs.docs.get('users/u1/days/2026-09-03').items[0].sets[0].w, 333, '他端末が先に書いた日は上書きしない'); eq(fs.docs.get('users/u1/days/2026-09-04').items[0].sets[0].w, 40);
+});
+await test('初期マスタの自動書き込みは「サーバーに master が無い」と確認できた時だけ（クラウドにあれば触らない）', async () => {
+  const fs = new FakeFs(), cm = D.defaultMaster(); cm.exercises.push({ id: 'x9', part: 'chest', name: '他端末の種目' }); fs.docs.set('users/u1/meta/master', cm);
+  const x = mkCloud({ user: { uid: 'u1', email: 'a@b' }, fs }); await x.store.init(); await x.cloud.start(); await x.settle(); eq(fs.docs.get('users/u1/meta/master').exercises.length, 22); eq(fs.batches, []);
+  const fs2 = new FakeFs(); fs2.online = false; const y = mkCloud({ user: { uid: 'u1', email: 'a@b' }, fs: fs2 }); await y.store.init(); await y.cloud.start(); await y.settle(); ok(!fs2.docs.has('users/u1/meta/master'), 'オフライン（未確認）では書かない');
+});
+await test('F3/(4): 保存先の切替中は state.switching=true、完了時に switched を通知（画面の作り直し用）', async () => {
+  const x = mkCloud(); await x.store.init(); await x.cloud.start(); const seen = []; x.cloud.onChange(ev => seen.push((x.cloud.state().switching ? 'switching' : 'idle') + (ev && ev.switched ? ':switched' : '')));
+  x.cloud.signIn(); await x.settle(); ok(seen.includes('switching')); ok(seen.includes('idle:switched')); ok(seen.indexOf('switching') < seen.indexOf('idle:switched')); eq(x.cloud.state().switching, false);
+});
+await test('F5: リスナーがエラーになっても張り直す（reconnect・バックオフ・online 復帰）→ 成功したらエラー解除', async () => {
+  const fs = new FakeFs(); fs.denied = true; fs.docs.set('users/u1/days/2026-09-01', dayDoc(1)); const { s, ad } = await mkCloudStore(fs); const ev = []; s.onChange(e => ev.push(e.what));
+  eq(s.syncState().error.code, 'permission-denied'); eq(fs.listeners.length, 0, 'エラーになったリスナーは解除済み'); eq(await s.saveDay('2026-09-02', dayDoc(2)), false, 'エラー中は書き込めない');
+  fs.denied = false; s.reconnect(); await tick(40); eq(s.syncState().error, null); eq(s.syncState().ready, true); eq(Object.keys(s.days()), ['2026-09-01']); ok(ev.includes('ready')); eq(fs.listeners.length, 4); ad.dispose();
+  const fs2 = new FakeFs(); fs2.denied = true; const b = await mkCloudStore(fs2, { backoff: [40, 80] }); fs2.denied = false; await tick(120); eq(b.s.syncState().error, null, 'バックオフ後に自動で再購読'); b.ad.dispose();
+  const fs3 = new FakeFs(); fs3.denied = true; const bus = new EventTarget(); const c3 = await mkCloudStore(fs3, { events: bus }); fs3.denied = false; bus.dispatchEvent(new Event('online')); await tick(40); eq(c3.s.syncState().error, null, 'online 復帰で再試行'); c3.ad.dispose();
+});
+await test('F6: ログイン連打ではポップアップを1回しか開かない・処理中は signingIn=true・cancelled-popup-request はトーストしない', async () => {
+  let rejectPopup; const x = mkCloud({ popup: () => new Promise((_, rej) => { rejectPopup = rej; }) }); await x.store.init(); await x.cloud.start();
+  x.cloud.signIn(); x.cloud.signIn(); x.cloud.signIn(); eq(x.calls.filter(c => c === 'popup').length, 1); eq(x.cloud.state().signingIn, true);
+  const n = x.toasts.length; rejectPopup({ code: 'auth/cancelled-popup-request' }); await tick(); eq(x.cloud.state().signingIn, false); eq(x.toasts.length, n, 'トーストなし');
+  x.cloud.signIn(); eq(x.calls.filter(c => c === 'popup').length, 2); rejectPopup({ code: 'auth/popup-closed-by-user' }); await tick(); ok(x.toasts[x.toasts.length - 1].includes('キャンセル'));
+});
+await test('F7: SDK 取得失敗の状態でログインを押した時のメッセージは1つだけ', async () => {
+  const x = mkCloud({ loadFail: true }); await x.store.init(); await x.cloud.start(); const n = x.toasts.length;
+  x.cloud.signIn(); await tick(60); eq(x.toasts.length, n + 1); ok(x.toasts[n].includes('オフラインのためログインできません'));
+});
+
+group('Firebase: 設定・SW・ルールの整合');
+await test('firebaseConfig と SDK の URL', () => { eq(CFG.firebaseConfig.projectId, 'workout-note-b45cd'); eq(CFG.firebaseConfig.authDomain, 'workout-note-b45cd.firebaseapp.com'); ok(/^\d+\.\d+\.\d+$/.test(CFG.SDK_VERSION)); eq(CFG.SDK_BASE, 'https://www.gstatic.com/firebasejs/' + CFG.SDK_VERSION + '/'); eq(CFG.SDK_FILES, ['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js']); });
+await test('sw.js: SDK バージョンが一致し、新規ファイルがアプリシェルに入っている／API・認証の通信には触らない', async () => {
+  const sw = await (await fetch('../app/sw.js', { cache: 'no-store' })).text();
+  eq(sw.match(/const SDK_VERSION = '([^']+)'/)[1], CFG.SDK_VERSION); eq(sw.match(/const CACHE_VERSION = '([^']+)'/)[1], 'v' + D.APP_VERSION); eq(D.APP_VERSION, '1.1.1');
+  ['js/firebase-config.js', 'js/auth.js', 'js/store-firebase.js', 'js/migrate.js', 'js/cloud.js'].forEach(f => ok(sw.includes("'" + f + "'"), f + ' が SHELL に無い'));
+  const code = sw.split('\n').filter(l => !l.trim().startsWith('//')).join('\n'); ['firestore.googleapis.com', 'identitytoolkit', 'securetoken', 'apis.google.com', 'firebaseapp.com'].forEach(h => ok(!code.includes(h), h + ' を SW のコードで扱っている'));
+});
+await test('firestore.rules: 本人だけが自分の users/{uid} 以下を読み書きできる', async () => {
+  const r = await (await fetch('../firestore.rules', { cache: 'no-store' })).text(); ok(r.includes("rules_version = '2'")); ok(r.includes('match /users/{uid}/{document=**}')); ok(r.includes('allow read, write: if request.auth != null && request.auth.uid == uid;'));
+});
+
+finish();
+</script>
+</body>
+</html>

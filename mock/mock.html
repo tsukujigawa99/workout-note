@@ -1,0 +1,430 @@
+<title>KINTORE NOTE モック</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+:root{
+  --hero-bg:#D23B38; --hero-ink:#FFFFFF; --hero-dim:rgba(255,255,255,.55); --hero-soft:rgba(255,255,255,.34);
+  --sel-bg:#FFFFFF; --sel-ink:#D23B38;
+  --ground:#EFE9E8; --surface:#FFFFFF; --sunk:#F6F1F0; --ink:#2B2021; --ink-2:#8B7D7D; --line:#E3DAD9;
+  --accent:#D23B38; --accent-ink:#FFFFFF; --accent-weak:#FBE9E8; --ok:#2E9E6B;
+  --disp:"Oswald","Arial Narrow","Noto Sans JP",sans-serif;
+  --body:"Noto Sans JP","Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif;
+}
+:root[data-skin="black"]{
+  --hero-bg:#151213; --hero-ink:#F4EEEE; --hero-dim:rgba(244,238,238,.45); --hero-soft:rgba(224,68,63,.5);
+  --sel-bg:#E0443F; --sel-ink:#FFFFFF;
+  --ground:#0B090A; --surface:#1C1819; --sunk:#262122; --ink:#F1EBEB; --ink-2:#9C8F8F; --line:#352D2E;
+  --accent:#E0443F; --accent-ink:#FFFFFF; --accent-weak:#3A1B1B; --ok:#4CC38A;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:14px;line-height:1.5;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hero :focus-visible,.bar :focus-visible{outline-color:var(--hero-ink)}
+.num{font-family:var(--disp);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.muted{color:var(--ink-2)}
+svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+.app{max-width:480px;margin:0 auto;min-height:100%;padding-bottom:calc(74px + env(safe-area-inset-bottom,0px));background:var(--ground)}
+@media (min-width:960px){.app{max-width:920px}}
+
+/* ---------- hero (home) ---------- */
+.hero{background:var(--hero-bg);color:var(--hero-ink);padding:12px 16px 18px}
+.hero-top{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid var(--hero-ink)}
+.brand{font-family:var(--disp);font-weight:600;font-size:20px;letter-spacing:.12em}
+.brand small{font-family:var(--body);font-size:10px;font-weight:400;letter-spacing:.05em;margin-left:6px;opacity:.75}
+.iconbtn{width:40px;height:40px;display:grid;place-items:center;border-radius:50%}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:14px;padding-top:12px}
+@media (max-width:359px){.hero-grid{grid-template-columns:1fr}}
+.month{display:flex;align-items:baseline;gap:6px}
+.month h1{margin:0;font-family:var(--disp);font-weight:600;font-size:clamp(24px,7.4vw,40px);line-height:1.1;flex:1;white-space:nowrap}
+.month button{font-family:var(--disp);font-size:20px;width:30px;height:32px;opacity:.9}
+.dow,.days{display:grid;grid-template-columns:repeat(7,1fr);text-align:center}
+.dow{font-family:var(--disp);font-size:11px;letter-spacing:.08em;padding:6px 0;border-bottom:1px solid var(--hero-dim);margin-bottom:6px}
+.days{gap:4px 2px}
+.day{aspect-ratio:1;max-width:44px;width:100%;margin:0 auto;border-radius:50%;display:grid;place-items:center;font-family:var(--disp);font-size:14px;border:1.5px solid var(--hero-dim);color:var(--hero-ink)}
+.day.out{border-color:transparent;color:var(--hero-dim)}
+.day.done{background:var(--hero-soft);border-color:transparent}
+.day.sel{background:var(--sel-bg);color:var(--sel-ink);border-color:var(--sel-bg);font-weight:600}
+.day.today:not(.sel){border-color:var(--hero-ink);border-width:2px}
+.archive{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:10px;border-top:1px dotted var(--hero-dim);font-family:var(--disp)}
+.archive .lbl{font-size:13px;line-height:1.15;letter-spacing:.04em}
+.archive .big{font-size:30px;font-weight:600;line-height:1;border-left:1px solid var(--hero-ink);padding-left:10px}
+.archive .big small{font-size:14px;font-weight:400}
+.archive .tot{margin-left:auto;text-align:center;font-size:11px;letter-spacing:.06em}
+.archive .tot b{display:block;background:var(--sel-bg);color:var(--sel-ink);border-radius:4px;padding:0 6px;font-size:15px;font-weight:500}
+.stats{display:flex;flex-direction:column;gap:8px}
+.stat{border:1.5px solid var(--hero-dim);border-radius:12px;padding:8px 10px}
+.stat h2{margin:0;font-size:11px;font-weight:700}
+.stat .v{display:flex;align-items:baseline;justify-content:space-between;gap:6px;flex-wrap:wrap}
+.stat .v b{font-family:var(--disp);font-size:22px;font-weight:600}
+.stat .v span{font-size:10px;opacity:.85;white-space:nowrap}
+.weeks{display:grid;grid-template-columns:auto 1fr;gap:4px 6px;align-items:center;margin-top:6px;font-size:10px}
+.weeks i{display:block;height:11px;background:var(--hero-soft);border-radius:1px;min-width:2px}
+.weeks i.now{background:var(--hero-ink)}
+.weeks span.now{font-weight:700}
+
+/* ---------- sub-screen bar ---------- */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--hero-bg);color:var(--hero-ink);display:grid;grid-template-columns:48px 1fr 48px;align-items:center;height:52px;padding:0 6px}
+.bar h1{margin:0;font-size:16px;font-weight:700;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .sub{display:block;font-family:var(--disp);font-weight:400;font-size:11px;letter-spacing:.06em;opacity:.8;line-height:1}
+
+.pad{padding:16px;display:flex;flex-direction:column;gap:14px}
+.cta-row{display:grid;grid-template-columns:1.7fr 1fr;gap:10px}
+.btn{min-height:52px;border-radius:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 12px;border:1.5px solid var(--accent);color:var(--accent);background:var(--surface)}
+.btn.pri{background:var(--accent);color:var(--accent-ink)}
+.btn.sm{min-height:40px;font-size:13px;border-radius:10px}
+.btn.ghost{border-color:var(--line);color:var(--ink);font-weight:500}
+.dayhead{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.dayhead h2{margin:0;font-family:var(--disp);font-weight:500;font-size:20px}
+.dayhead h2 small{font-family:var(--body);font-size:12px;color:var(--ink-2);margin-left:6px}
+
+.records{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}
+.rec{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:left;width:100%;display:block}
+.rec-h{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.rec-h b{font-size:15px;flex:1;min-width:0}
+.rec-h .rm{font-size:12px;color:var(--ink-2)}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.setline{display:grid;grid-template-columns:20px 74px 16px 1fr;font-family:var(--disp);font-size:15px;font-variant-numeric:tabular-nums;padding-left:16px}
+.setline span:nth-child(2){text-align:right}
+.setline span:nth-child(3){text-align:center;color:var(--ink-2)}
+.setline em{font-style:normal;font-family:var(--body);font-size:11px;color:var(--ink-2);margin-left:8px}
+.empty{border:1.5px dashed var(--line);border-radius:12px;padding:22px 16px;text-align:center;color:var(--ink-2)}
+.memo{width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;padding:8px 2px;font-size:16px;border-radius:0}
+
+/* ---------- picker ---------- */
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chip{flex:none;min-height:36px;padding:0 14px;border-radius:18px;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;gap:6px;font-size:13px}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.row{display:flex;align-items:center;gap:10px;width:100%;min-height:54px;padding:8px 12px;text-align:left;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row .t{flex:1;min-width:0}
+.row .t b{display:block;font-weight:500;font-size:15px}
+.row .t small{color:var(--ink-2);font-size:11px}
+.row .r{font-family:var(--disp);font-size:15px;color:var(--ink-2);white-space:nowrap}
+.sect{font-size:12px;font-weight:700;color:var(--ink-2);letter-spacing:.08em;display:flex;align-items:center;gap:6px;margin:4px 2px -6px}
+
+/* ---------- entry ---------- */
+.timer{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.timer .pill{display:flex;align-items:center;gap:8px;border:2px solid var(--accent);border-radius:26px;padding:3px 3px 3px 12px;background:var(--surface);color:var(--accent)}
+.timer input{width:54px;border:0;border-bottom:1px solid var(--ink-2);background:transparent;text-align:center;font-family:var(--disp);font-size:20px;color:var(--ink);padding:0;border-radius:0}
+.timer .go{background:var(--accent);color:var(--accent-ink);border-radius:20px;min-height:38px;padding:0 16px;font-family:var(--disp);letter-spacing:.06em;font-size:15px}
+.timer .count{font-family:var(--disp);font-size:24px;min-width:64px;text-align:center;color:var(--ink);font-variant-numeric:tabular-nums}
+.timer.ring .pill{animation:ring .5s 6 alternate}
+@keyframes ring{to{background:var(--accent);}}
+@media (prefers-reduced-motion:reduce){.timer.ring .pill{animation:none;background:var(--accent-weak)}}
+.presets{display:flex;gap:6px}
+.presets button{min-width:44px;min-height:32px;border-radius:16px;border:1px solid var(--line);font-family:var(--disp);font-size:13px;background:var(--surface)}
+.last{background:var(--sunk);border:1px solid var(--line);border-radius:12px 12px 0 0;padding:10px 12px;display:flex;gap:10px;align-items:center}
+.last .t{flex:1}
+.last h3{margin:0 0 2px;font-size:13px;font-weight:700}
+.last h3 span{font-family:var(--disp);font-weight:400;font-size:14px;margin-left:4px}
+.last .setline{padding-left:6px;font-size:14px;color:var(--ink-2)}
+.last .acts{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.sets{background:var(--surface);border:1px solid var(--line);border-top:0;border-radius:0 0 12px 12px}
+.set{padding:10px 12px 12px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:22px 1fr;gap:6px 8px;align-items:center}
+.set:last-child{border-bottom:0}
+.set .no{font-family:var(--disp);font-size:20px;grid-row:span 2;align-self:start;padding-top:8px}
+.set .main{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.step{display:flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--sunk)}
+.step button{width:36px;height:44px;font-family:var(--disp);font-size:20px;color:var(--accent)}
+.step input{width:64px;height:44px;border:0;background:var(--surface);text-align:center;font-family:var(--disp);font-size:20px;padding:0;border-radius:0;-moz-appearance:textfield}
+.step input::-webkit-outer-spin-button,.step input::-webkit-inner-spin-button{-webkit-appearance:none}
+.step.reps input{width:52px}
+.unit{font-size:11px;color:var(--ink-2)}
+.set .subl{display:flex;align-items:center;gap:8px}
+.set .subl .memo{flex:1;min-width:0;font-size:16px;padding:6px 2px}
+.set .rmv{font-family:var(--disp);font-size:13px;color:var(--ink-2);white-space:nowrap;min-width:76px;text-align:right}
+.assist{display:flex;align-items:center;gap:2px;font-size:10px;color:var(--ink-2);min-height:36px;padding:0 4px}
+.assist.on{color:var(--ok);font-weight:700}
+.assist svg{width:18px;height:18px}
+.del{color:var(--ink-2);width:32px;height:36px;display:grid;place-items:center}
+.del svg{width:18px;height:18px}
+.addset{display:flex;gap:10px}
+.addset .btn{flex:1}
+
+/* ---------- history ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.card-h{background:var(--accent);color:var(--accent-ink);display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:6px 12px;font-family:var(--disp)}
+.card-h b{font-size:17px;font-weight:500}
+.card-h span{font-size:11px;letter-spacing:.04em}
+table.h{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+table.h th{font-size:10px;font-weight:400;color:var(--ink-2);text-align:right;padding:4px 12px 0}
+table.h th:first-child,table.h td:first-child{text-align:left;width:40px}
+table.h td{padding:7px 12px;border-bottom:1px solid var(--line);text-align:right;font-family:var(--disp);font-size:17px}
+table.h tr:last-child td{border-bottom:0}
+table.h td small{font-family:var(--body);font-size:10px;color:var(--ink-2);margin-left:3px}
+table.h td.rm{font-size:13px;color:var(--ink-2)}
+.chartbox{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 10px 4px}
+.chartbox h3{margin:0 2px 4px;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:baseline}
+.chartbox h3 b{font-family:var(--disp);font-size:18px;font-weight:500}
+.chartbox svg{width:100%;height:auto;display:block}
+.chartbox text{font-family:var(--disp);font-size:10px;fill:var(--ink-2)}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.seg button{flex:1;min-height:36px;font-size:12px;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--accent);color:var(--accent-ink);font-weight:700}
+
+/* ---------- body ---------- */
+.bodyform{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.field label{display:block;font-size:11px;color:var(--ink-2)}
+.field div{display:flex;align-items:baseline;gap:4px}
+.field input{width:100%;border:0;background:transparent;font-family:var(--disp);font-size:28px;padding:0;min-width:0}
+
+/* ---------- tabs / sheet / toast ---------- */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs div{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.tabs button{min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px;color:var(--ink-2)}
+.tabs button.on{color:var(--accent);font-weight:700}
+.sheet-wrap{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--ground);width:100%;max-width:480px;max-height:85%;overflow:auto;border-radius:18px 18px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:12px}
+.sheet-h{display:flex;align-items:center;justify-content:space-between}
+.sheet-h h2{margin:0;font-size:16px}
+.rmout{text-align:center;font-family:var(--disp)}
+.rmout b{font-size:44px;font-weight:600;color:var(--accent);line-height:1.1}
+.rmtable{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.rmtable div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px;text-align:center;font-family:var(--disp);font-size:16px}
+.rmtable small{display:block;font-family:var(--body);font-size:10px;color:var(--ink-2)}
+.toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;background:var(--ink);color:var(--ground);padding:10px 16px;border-radius:22px;font-size:13px;max-width:calc(100% - 32px);text-align:center}
+.note{font-size:11px;color:var(--ink-2);text-align:center}
+</style>
+
+<div class="app"><main id="view"></main></div>
+<nav class="tabs" aria-label="メインメニュー"><div id="tabs"></div></nav>
+<div id="sheet"></div>
+<div id="toast" class="toast" hidden></div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(2,'0');
+const key=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const fromKey=k=>{const a=k.split('-');return new Date(+a[0],+a[1]-1,+a[2])};
+const slash=k=>k.replace(/-/g,'/');
+const today=new Date();today.setHours(0,0,0,0);
+const TK=key(today);
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const WD=['日','月','火','水','木','金','土'];
+const rm=(w,r)=>w*(1+r/40);              // 筋トレMEMOと同じ換算式
+const f1=n=>(Math.round(n*10)/10).toFixed(1);
+const f2=n=>(Math.round(n*100)/100).toFixed(2);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const IC={home:'M3 11l9-8 9 8M5 10v10h14V10',chart:'M4 20V4M4 20h16M8 16l4-5 3 3 5-7',
+ body:'M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2zM8 9a4 4 0 018 0M12 9l1.5-2.5',
+ set:'M4 7h10M18 7h2M4 17h2M10 17h10M16 5v4M8 15v4',back:'M15 5l-7 7 7 7',plus:'M12 5v14M5 12h14',
+ copy:'M9 9h11v11H9zM5 15H4V4h11v1',timer:'M12 9v4l3 2M9 2h6M12 5a8 8 0 100 16 8 8 0 000-16z',check:'M5 12l5 5 9-10',
+ bell:'M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12',next:'M9 5l7 7-7 7',trash:'M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13',x:'M6 6l12 12M18 6L6 18'};
+const ic=n=>n==='skin'?'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18z" fill="currentColor"/></svg>'
+ :'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="'+IC[n]+'"/></svg>';
+
+/* ---------- サンプルデータ ---------- */
+const PARTS=[{id:'chest',n:'胸',c:'#E07A3F'},{id:'back',n:'背中',c:'#3F7FBF'},{id:'sho',n:'肩',c:'#8A63C9'},{id:'arm',n:'腕',c:'#2FA38A'},{id:'leg',n:'脚',c:'#C9A227'},{id:'abs',n:'腹',c:'#6B7A8F'}];
+const EX=[['bp','chest','ベンチプレス',70],['idp','chest','インクラインダンベルプレス',24],['fly','chest','ダンベルフライ',16],['dip','chest','ディップス',72],['pu','chest','プッシュアップ',72],
+ ['dl','back','デッドリフト',110],['lat','back','ラットプルダウン',55],['row','back','ベントオーバーロウ',50],['chin','back','懸垂',72],
+ ['sp','sho','ショルダープレス',40],['sr','sho','サイドレイズ',9],['rr','sho','リアレイズ',8],
+ ['bc','arm','バーベルカール',30],['ic','arm','インクラインカール',12],['pd','arm','ケーブルプレスダウン',32.5],
+ ['sq','leg','スクワット',90],['lp','leg','レッグプレス',160],['lc','leg','レッグカール',40],['add','leg','ヒップアダクター',35],
+ ['ab','abs','アブローラー',72],['cc','abs','ケーブルクランチ',45]].map(a=>({id:a[0],part:a[1],n:a[2],base:a[3]}));
+const exOf=id=>EX.find(e=>e.id===id), partOf=id=>PARTS.find(p=>p.id===id);
+const logs={}, body={};
+(function seed(){
+  let s=7;const rnd=()=>(s=(s*1103515245+12345)%2147483648)/2147483648;
+  const menus=[['bp','idp','fly','pd'],['dl','lat','row','bc'],['sq','lp','lc','add'],['sp','sr','rr','ab']];
+  const on=[1,0,1,1,0,1,0];let m=0;
+  for(let i=62;i>=1;i--){
+    const d=addDays(today,-i);
+    if(on[d.getDay()]){const g=1+(62-i)/62*0.1;
+      logs[key(d)]={memo:'',items:menus[m++%4].map(id=>{const b=exOf(id).base*g;
+        return {ex:id,sets:[0,1,2].concat(rnd()>.5?[3]:[]).map(k=>({w:Math.round(b*(k===0?.9:1)/2.5)*2.5,r:12-k-Math.floor(rnd()*3),memo:'',assist:false}))}})};
+    }
+    if(i<=45)body[key(d)]={w:Math.round((72.6-(45-i)*0.03+(rnd()-.5)*.6)*10)/10,f:Math.round((17.6-(45-i)*0.02+(rnd()-.5)*.4)*10)/10};
+  }
+  logs[TK]={memo:'',items:[{ex:'bp',sets:[{w:70,r:10,memo:'',assist:false},{w:77.5,r:8,memo:'',assist:false},{w:77.5,r:7,memo:'ラスト1回きつい',assist:true}]}]};
+})();
+
+/* ---------- 集計 ---------- */
+const valid=s=>s.w!=null&&s.r!=null&&s.r>0;
+const itemVol=it=>it.sets.filter(valid).reduce((a,s)=>a+s.w*s.r,0);
+const itemRM=it=>it.sets.filter(valid).reduce((a,s)=>Math.max(a,rm(s.w,s.r)),0);
+const dayVol=k=>logs[k]?logs[k].items.reduce((a,it)=>a+itemVol(it),0):0;
+const trained=k=>!!(logs[k]&&logs[k].items.some(it=>it.sets.some(valid)));
+const rangeVol=(from,to)=>{let t=0;for(let i=from;i<=to;i++)t+=dayVol(key(addDays(today,-i)));return t};
+const ton=kg=>f2(kg/1000);
+function exHistory(id,beforeKey){return Object.keys(logs).filter(k=>(!beforeKey||k<beforeKey)).sort().reverse()
+  .map(k=>({k,it:logs[k].items.find(i=>i.ex===id&&i.sets.some(valid))})).filter(x=>x.it)}
+
+/* ---------- 状態 ---------- */
+const S={tab:'home',screen:'home',date:TK,ym:[today.getFullYear(),today.getMonth()],ex:null,part:'chest',from:'home',range:90,timer:{sec:90,end:0,h:0}};
+let skin='red';try{skin=localStorage.getItem('kn-skin')||'red'}catch(e){}
+document.documentElement.dataset.skin=skin;
+
+/* ---------- 画面 ---------- */
+function home(){
+  const [y,m]=S.ym, first=new Date(y,m,1), start=addDays(first,-first.getDay());
+  let cells='';const weeks=Math.ceil((first.getDay()+new Date(y,m+1,0).getDate())/7);
+  for(let i=0;i<weeks*7;i++){const d=addDays(start,i),k=key(d),out=d.getMonth()!==m;
+    cells+='<button class="day'+(out?' out':'')+(trained(k)&&!out?' done':'')+(k===S.date?' sel':'')+(k===TK?' today':'')+'" data-act="pickDay" data-arg="'+k+'" aria-label="'+slash(k)+(trained(k)?' 記録あり':'')+'">'+d.getDate()+'</button>'}
+  const mdays=Object.keys(logs).filter(k=>k.startsWith(y+'-'+pad(m+1))&&trained(k)).length;
+  const tdays=Object.keys(logs).filter(trained).length;
+  const v7=rangeVol(0,6),v28=rangeVol(0,27),vall=Object.keys(logs).reduce((a,k)=>a+dayVol(k),0);
+  const wk=[0,1,2,3,4,5].map(i=>rangeVol(i*7,i*7+6)),mx=Math.max.apply(null,wk)||1;
+  const bars=wk.map((v,i)=>'<span class="'+(i?'':'now')+'">'+(i?i+'週前':'今週')+'</span><i class="'+(i?'':'now')+'" style="width:'+Math.max(2,v/mx*100)+'%"></i>').join('');
+  const d=fromKey(S.date),log=logs[S.date],items=log?log.items.filter(it=>it.sets.some(valid)):[];
+  const recs=items.length?items.map(it=>{const e=exOf(it.ex);return '<button class="rec" data-act="openEx" data-arg="'+it.ex+'"><div class="rec-h"><i class="dot" style="background:'+partOf(e.part).c+'"></i><b>'+esc(e.n)+'</b><span class="rm num">RM : '+f2(itemRM(it))+'kg</span></div>'
+    +it.sets.filter(valid).map((s,i)=>'<div class="setline"><span>'+(i+1)+'</span><span>'+f1(s.w)+' kg</span><span>×</span><span>'+s.r+' reps'+(s.assist?'<em>補助</em>':'')+(s.memo?'<em>'+esc(s.memo)+'</em>':'')+'</span></div>').join('')+'</button>'}).join('')
+    :'<div class="empty">この日の記録はまだありません。<br>「トレーニングを追加」から種目を選んでください。</div>';
+  return '<section class="hero"><div class="hero-top"><button class="iconbtn" data-act="tab" data-arg="settings" aria-label="設定">'+ic('set')+'</button><div class="brand">KINTORE NOTE<small>仮称</small></div><button class="iconbtn" data-act="skin" aria-label="赤/黒テーマ切り替え">'+ic('skin')+'</button></div>'
+   +'<div class="hero-grid"><div><div class="month"><h1>'+MONTHS[m]+' '+y+'</h1><button data-act="mon" data-arg="-1" aria-label="前の月">‹</button><button data-act="mon" data-arg="1" aria-label="次の月">›</button></div>'
+   +'<div class="dow"><span>SUN</span><span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span><span>SAT</span></div><div class="days">'+cells+'</div>'
+   +'<div class="archive"><div class="lbl">MONTHLY<br>ARCHIVE</div><div class="big">'+mdays+' <small>days</small></div><div class="tot">TOTAL<b>'+tdays+' days</b></div></div></div>'
+   +'<div class="stats"><div class="stat"><h2>合計負荷量 / 7日間</h2><div class="v"><b>'+ton(v7)+' t</b><span>乗用車 × '+f1(v7/1500)+'</span></div><div class="weeks">'+bars+'</div></div>'
+   +'<div class="stat"><h2>合計負荷量 / 28日間</h2><div class="v"><b>'+ton(v28)+' t</b><span>バス × '+f1(v28/15000)+'</span></div></div>'
+   +'<div class="stat"><h2>総合計負荷量</h2><div class="v"><b>'+ton(vall)+' t</b><span>旅客機 × '+f1(vall/350000)+'</span></div></div></div></div></section>'
+   +'<div class="pad"><div class="cta-row"><button class="btn pri" data-act="pick">'+ic('plus')+(S.date===TK?'本日の':'')+'トレーニングを追加</button><button class="btn" data-act="rmcalc">'+ic('bell')+'RM計算機</button></div>'
+   +'<div class="dayhead"><h2>'+slash(S.date)+'<small>('+WD[d.getDay()]+')'+(S.date===TK?' 今日':'')+'</small></h2><button class="btn sm ghost" data-act="copyday">'+ic('copy')+'過去の日からコピー</button></div>'
+   +'<div class="records">'+recs+'</div>'
+   +'<input class="memo" id="daymemo" placeholder="この日のメモ（体調・睡眠など）" value="'+esc(log?log.memo:'')+'">'
+   +'<p class="note">画面モック：表示中の記録はすべてサンプルデータです</p></div>';
+}
+function bar(title,sub,right){return '<header class="bar"><button class="iconbtn" data-act="back" aria-label="戻る">'+ic('back')+'</button><h1>'+esc(title)+(sub?'<span class="sub">'+sub+'</span>':'')+'</h1>'+(right||'<span></span>')+'</header>'}
+function pick(){
+  const chips=PARTS.map(p=>'<button class="chip'+(p.id===S.part?' on':'')+'" data-act="part" data-arg="'+p.id+'"><i class="dot" style="background:'+p.c+'"></i>'+p.n+'</button>').join('');
+  const rows=EX.filter(e=>e.part===S.part).map(e=>{const h=exHistory(e.id)[0];
+    return '<button class="row" data-act="openEx" data-arg="'+e.id+'"><span class="t"><b>'+esc(e.n)+'</b><small>'+(h?'前回 '+slash(h.k)+'　'+f1(h.it.sets[h.it.sets.length-1].w)+'kg × '+h.it.sets[h.it.sets.length-1].r:'記録なし')+'</small></span>'+ic('next')+'</button>'}).join('');
+  return bar('種目を選ぶ',slash(S.date))+'<div class="pad"><div class="chips">'+chips+'</div><div class="list">'+rows+'</div><button class="btn sm ghost" data-act="todo">'+ic('plus')+'新しい種目を追加</button></div>';
+}
+function curItem(create){let log=logs[S.date];if(!log){if(!create)return null;log=logs[S.date]={memo:'',items:[]}}
+  let it=log.items.find(i=>i.ex===S.ex);if(!it&&create){it={ex:S.ex,sets:[]};log.items.push(it)}return it}
+function setRow(s,i){return '<div class="set" id="set-'+i+'"><div class="no">'+(i+1)+'</div><div class="main">'
+  +'<div class="step"><button data-act="stepW" data-arg="'+i+',-2.5" aria-label="重量を2.5kg減らす">−</button><input id="w-'+i+'" data-f="w" data-i="'+i+'" type="number" inputmode="decimal" step="0.5" placeholder="重さ" value="'+(s.w==null?'':s.w)+'" aria-label="'+(i+1)+'セット目の重量"><button data-act="stepW" data-arg="'+i+',2.5" aria-label="重量を2.5kg増やす">＋</button></div><span class="unit">kg ×</span>'
+  +'<div class="step reps"><button data-act="stepR" data-arg="'+i+',-1" aria-label="回数を1減らす">−</button><input id="r-'+i+'" data-f="r" data-i="'+i+'" type="number" inputmode="numeric" placeholder="回数" value="'+(s.r==null?'':s.r)+'" aria-label="'+(i+1)+'セット目の回数"><button data-act="stepR" data-arg="'+i+',1" aria-label="回数を1増やす">＋</button></div><span class="unit">回</span></div>'
+  +'<div class="subl"><input class="memo" id="m-'+i+'" data-f="memo" data-i="'+i+'" placeholder="メモ" value="'+esc(s.memo)+'" aria-label="'+(i+1)+'セット目のメモ"><span class="rmv" id="rm-'+i+'">'+(valid(s)?'RM '+f2(rm(s.w,s.r))+'kg':'')+'</span>'
+  +'<button class="assist'+(s.assist?' on':'')+'" data-act="assist" data-arg="'+i+'" aria-pressed="'+s.assist+'">'+ic('check')+'補助</button><button class="del" data-act="delSet" data-arg="'+i+'" aria-label="'+(i+1)+'セット目を削除">'+ic('trash')+'</button></div></div>'}
+function entry(){
+  const e=exOf(S.ex),it=curItem(true);if(!it.sets.length)for(let i=0;i<3;i++)it.sets.push({w:null,r:null,memo:'',assist:false});
+  const h=exHistory(S.ex,S.date)[0];
+  const last=h?'<div class="last"><div class="t"><h3>Last Record :<span>'+slash(h.k)+'</span></h3>'+h.it.sets.filter(valid).map((s,i)=>'<div class="setline"><span>'+(i+1)+'</span><span>'+f1(s.w)+' kg</span><span>×</span><span>'+s.r+' reps</span></div>').join('')+'</div><div class="acts"><button class="btn sm pri" data-act="copyLast">'+ic('copy')+'コピー</button><button class="btn sm ghost" data-act="hist">履歴</button></div></div>'
+    :'<div class="last"><div class="t"><h3>Last Record :<span>なし</span></h3><span class="muted">この種目は初めての記録です</span></div></div>';
+  const run=S.timer.end>Date.now();
+  return bar(e.n,slash(S.date),'<button class="iconbtn" data-act="hist" aria-label="履歴とグラフ">'+ic('chart')+'</button>')
+   +'<div class="pad"><div class="timer" id="timer"><div class="presets">'+[60,90,120,180].map(v=>'<button data-act="preset" data-arg="'+v+'">'+v+'</button>').join('')+'</div><div class="pill">'+ic('timer')
+   +(run?'<span class="count" id="count">--:--</span><button class="go" data-act="timerStop">STOP</button>':'<input id="tsec" type="number" inputmode="numeric" value="'+S.timer.sec+'" aria-label="インターバル秒数"><button class="go" data-act="timerStart">START</button>')+'</div></div>'
+   +'<div>'+last+'<div class="sets">'+it.sets.map(setRow).join('')+'</div></div>'
+   +'<div class="addset"><button class="btn" data-act="addSet">'+ic('plus')+'セットを追加</button><button class="btn pri" data-act="back">'+ic('check')+'記録して戻る</button></div></div>';
+}
+function chart(pts){
+  if(pts.length<2)return '<p class="muted" style="padding:12px 2px">記録が2回以上になるとグラフが表示されます。</p>';
+  const W=340,H=150,L=40,R=12,T=12,B=22,ys=pts.map(p=>p.y);let mn=Math.min.apply(null,ys),mx=Math.max.apply(null,ys);if(mn===mx){mn-=1;mx+=1}
+  const g=(mx-mn)*.18;mn-=g;mx+=g;const X=i=>L+(W-L-R)*i/(pts.length-1),Y=v=>T+(H-T-B)*(1-(v-mn)/(mx-mn));
+  const line=pts.map((p,i)=>(i?'L':'M')+X(i).toFixed(1)+' '+Y(p.y).toFixed(1)).join(' ');
+  const ticks=[.1,.5,.9].map(t=>mn+(mx-mn)*t).map(v=>'<line x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v)+'" y2="'+Y(v)+'" stroke="var(--line)" stroke-width="1"/><text x="'+(L-6)+'" y="'+(Y(v)+3)+'" text-anchor="end">'+f1(v)+'</text>').join('');
+  const n=pts.length-1,lp=pts[n];
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="推移グラフ">'+ticks
+   +'<path d="'+line+' L'+X(n)+' '+(H-B)+' L'+L+' '+(H-B)+' Z" fill="var(--accent)" fill-opacity=".12" stroke="none"/><path d="'+line+'" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>'
+   +'<circle cx="'+X(n)+'" cy="'+Y(lp.y)+'" r="4" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>'
+   +'<text x="'+L+'" y="'+(H-6)+'">'+pts[0].x+'</text><text x="'+(W-R)+'" y="'+(H-6)+'" text-anchor="end">'+lp.x+'</text></svg>';
+}
+const seg=()=>'<div class="seg">'+[[30,'1か月'],[90,'3か月'],[180,'半年'],[365,'1年'],[0,'全期間']].map(a=>'<button class="'+(S.range===a[0]?'on':'')+'" data-act="range" data-arg="'+a[0]+'">'+a[1]+'</button>').join('')+'</div>';
+const inRange=k=>!S.range||k>=key(addDays(today,-S.range));
+function history(){
+  const e=exOf(S.ex),hs=exHistory(S.ex),hr=hs.filter(h=>inRange(h.k)).reverse();
+  const md=k=>k.slice(5).replace('-','/');
+  const best=hs.reduce((a,h)=>Math.max(a,itemRM(h.it)),0);
+  const cards=hs.map(h=>'<div class="card"><div class="card-h"><b>'+slash(h.k)+'</b><span>TOTAL : '+f1(itemVol(h.it))+'kg　MAX 1RM : '+f1(itemRM(h.it))+'kg</span></div><table class="h"><tr><th>セット</th><th>重さ</th><th>回数</th><th>RM</th></tr>'
+    +h.it.sets.filter(valid).map((s,i)=>'<tr><td>'+(i+1)+'</td><td>'+f1(s.w)+'<small>kg</small></td><td>'+s.r+'<small>回</small></td><td class="rm">'+f2(rm(s.w,s.r))+'kg</td></tr>').join('')+'</table></div>').join('');
+  return bar(e.n,'履歴 / 分析')+'<div class="pad">'+seg()
+   +'<div class="chartbox"><h3>推定1RM（最大）<b class="num">BEST '+f1(best)+' kg</b></h3>'+chart(hr.map(h=>({x:md(h.k),y:itemRM(h.it)})))+'</div>'
+   +'<div class="chartbox"><h3>総ボリューム（kg）</h3>'+chart(hr.map(h=>({x:md(h.k),y:itemVol(h.it)})))+'</div>'+(cards||'<div class="empty">まだ記録がありません。</div>')+'</div>';
+}
+function analysis(){
+  return '<header class="bar"><span></span><h1>履歴 / 分析</h1><span></span></header><div class="pad">'+PARTS.map(p=>{
+    const rows=EX.filter(e=>e.part===p.id).map(e=>{const hs=exHistory(e.id);if(!hs.length)return '';
+      return '<button class="row" data-act="histOf" data-arg="'+e.id+'"><span class="t"><b>'+esc(e.n)+'</b><small>最終 '+slash(hs[0].k)+'・'+hs.length+'回</small></span><span class="r">1RM '+f1(hs.reduce((a,h)=>Math.max(a,itemRM(h.it)),0))+'kg</span>'+ic('next')+'</button>'}).join('');
+    return rows?'<div class="sect"><i class="dot" style="background:'+p.c+'"></i>'+p.n+'</div><div class="list">'+rows+'</div>':''}).join('')+'</div>';
+}
+function bodyScr(){
+  const ks=Object.keys(body).sort(),kr=ks.filter(inRange),t=body[TK]||{},lastK=ks[ks.length-1],lb=body[lastK]||{};
+  const md=k=>k.slice(5).replace('-','/');
+  return '<header class="bar"><span></span><h1>体組成</h1><span></span></header><div class="pad"><div class="dayhead"><h2>'+slash(TK)+'<small>今日の記録</small></h2></div>'
+   +'<div class="bodyform"><div class="field"><label for="bw">体重</label><div><input id="bw" type="number" inputmode="decimal" step="0.1" placeholder="'+(lb.w||'')+'" value="'+(t.w||'')+'"><span class="unit">kg</span></div></div>'
+   +'<div class="field"><label for="bf">体脂肪率</label><div><input id="bf" type="number" inputmode="decimal" step="0.1" placeholder="'+(lb.f||'')+'" value="'+(t.f||'')+'"><span class="unit">%</span></div></div></div>'
+   +'<button class="btn pri" data-act="saveBody">'+ic('check')+'記録する</button>'+seg()
+   +'<div class="chartbox"><h3>体重（kg）<b class="num">'+(lb.w?f1(lb.w):'-')+'</b></h3>'+chart(kr.filter(k=>body[k].w).map(k=>({x:md(k),y:body[k].w})))+'</div>'
+   +'<div class="chartbox"><h3>体脂肪率（%）<b class="num">'+(lb.f?f1(lb.f):'-')+'</b></h3>'+chart(kr.filter(k=>body[k].f).map(k=>({x:md(k),y:body[k].f})))+'</div></div>';
+}
+function settings(){
+  const r=(t,s,v,act)=>'<button class="row" data-act="'+(act||'todo')+'"><span class="t"><b>'+t+'</b>'+(s?'<small>'+s+'</small>':'')+'</span><span class="r">'+(v||'')+'</span>'+ic('next')+'</button>';
+  return '<header class="bar"><span></span><h1>設定</h1><span></span></header><div class="pad">'
+   +'<div class="sect">表示</div><div class="list">'+r('テーマ','ホーム右上のボタンでも切り替えできます',skin==='red'?'赤':'黒','skin')+'</div>'
+   +'<div class="sect">記録</div><div class="list">'+r('部位・種目の管理','追加・名称変更・並び替え・非表示')+r('重量の増減ステップ','＋／−ボタン1回あたり','2.5 kg')+r('インターバルの初期値','','90 秒')+'</div>'
+   +'<div class="sect">データ</div><div class="list">'+r('同期の状態','Googleアカウントで自動同期','同期済み')+r('ログアウト','')+'</div>'
+   +'<p class="note">モックのため、テーマ以外の設定項目は動きません</p></div>';
+}
+const SCREENS={home,pick,entry,history,analysis,body:bodyScr,settings};
+function render(keep){
+  $('#view').innerHTML=SCREENS[S.screen]();
+  $('#tabs').innerHTML=[['home','home','ホーム'],['analysis','chart','履歴/分析'],['body','body','体組成'],['settings','set','設定']].map(t=>'<button class="'+(S.tab===t[0]?'on':'')+'" data-act="tab" data-arg="'+t[0]+'"'+(S.tab===t[0]?' aria-current="page"':'')+'>'+ic(t[1])+t[2]+'</button>').join('');
+  if(!keep)window.scrollTo(0,0);tick();
+}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2200)}
+function cleanup(){const log=logs[S.date];if(!log)return;log.items.forEach(it=>it.sets=it.sets.filter(valid));log.items=log.items.filter(it=>it.sets.length);if(!log.items.length&&!log.memo)delete logs[S.date]}
+
+/* ---------- タイマー ---------- */
+function tick(){const c=$('#count');if(!c)return;const left=Math.max(0,Math.ceil((S.timer.end-Date.now())/1000));c.textContent=pad(Math.floor(left/60))+':'+pad(left%60)}
+function beep(){try{const A=window.AudioContext||window.webkitAudioContext,a=new A();[0,.25,.5].forEach(t=>{const o=a.createOscillator(),g=a.createGain();o.frequency.value=880;o.connect(g);g.connect(a.destination);g.gain.setValueAtTime(.2,a.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+t+.2);o.start(a.currentTime+t);o.stop(a.currentTime+t+.22)})}catch(e){}
+  if(navigator.vibrate)navigator.vibrate([200,100,200])}
+function stopTimer(done){clearInterval(S.timer.h);S.timer.end=0;if(S.screen==='entry')render(true);if(done){beep();toast('インターバル終了。次のセットへ');const t=$('#timer');if(t)t.classList.add('ring')}}
+
+/* ---------- シート ---------- */
+const closeSheet=()=>{$('#sheet').innerHTML=''};
+function sheet(title,html){$('#sheet').innerHTML='<div class="sheet-wrap" data-act="closeSheetBg"><div class="sheet" role="dialog" aria-label="'+title+'"><div class="sheet-h"><h2>'+title+'</h2><button class="iconbtn" data-act="closeSheet" aria-label="閉じる">'+ic('x')+'</button></div>'+html+'</div></div>'}
+function updRM(){const w=+$('#rm-w').value,r=+$('#rm-r').value,one=w>0&&r>0?rm(w,r):0;
+  $('#rm-out').innerHTML='<small class="muted">推定 1RM</small><br><b>'+(one?f1(one):'--')+'</b> kg';
+  $('#rm-tb').innerHTML=[1,3,5,8,10,12].map(n=>'<div><small>'+n+' 回</small>'+(one?f1(one/(1+n/40)):'--')+' kg</div>').join('')}
+
+/* ---------- 操作 ---------- */
+const A={
+ tab(v){cleanup();S.tab=v;S.screen=v;render()},
+ skin(){skin=skin==='red'?'black':'red';document.documentElement.dataset.skin=skin;try{localStorage.setItem('kn-skin',skin)}catch(e){}if(S.screen==='settings')render(true)},
+ mon(v){let [y,m]=S.ym;m+=+v;if(m<0){m=11;y--}if(m>11){m=0;y++}S.ym=[y,m];render(true)},
+ pickDay(k){S.date=k;const d=fromKey(k);S.ym=[d.getFullYear(),d.getMonth()];render(true)},
+ pick(){S.screen='pick';render()},
+ part(v){S.part=v;render(true)},
+ openEx(id){S.ex=id;S.screen='entry';render()},
+ hist(){S.from='entry';S.screen='history';render()},
+ histOf(id){S.ex=id;S.from='analysis';S.screen='history';render()},
+ range(v){S.range=+v;render(true)},
+ back(){if(S.screen==='history'){S.screen=S.from;render();return}cleanup();S.screen='home';S.tab='home';render()},
+ addSet(){const it=curItem(true),p=it.sets[it.sets.length-1];it.sets.push({w:p?p.w:null,r:null,memo:'',assist:false});render(true);const el=$('#r-'+(it.sets.length-1));if(el)el.focus()},
+ delSet(i){curItem(true).sets.splice(+i,1);render(true)},
+ assist(i){const s=curItem(true).sets[+i];s.assist=!s.assist;render(true)},
+ stepW(a){const [i,d]=a.split(',').map(Number),it=curItem(true),s=it.sets[i];if(s.w==null){const h=exHistory(S.ex,S.date)[0];s.w=i>0&&it.sets[i-1].w!=null?it.sets[i-1].w:(h?h.it.sets[0].w:20)}else s.w=Math.max(0,s.w+d);render(true)},
+ stepR(a){const [i,d]=a.split(',').map(Number),s=curItem(true).sets[i];s.r=s.r==null?10:Math.max(0,s.r+d);render(true)},
+ copyLast(){const h=exHistory(S.ex,S.date)[0];if(!h)return;curItem(true).sets=h.it.sets.filter(valid).map(s=>({w:s.w,r:s.r,memo:'',assist:false}));render(true);toast('前回（'+slash(h.k)+'）の記録をコピーしました')},
+ preset(v){S.timer.sec=+v;const el=$('#tsec');if(el)el.value=v;else{A.timerStart()}},
+ timerStart(){const el=$('#tsec');if(el)S.timer.sec=Math.max(1,+el.value||90);clearInterval(S.timer.h);S.timer.end=Date.now()+S.timer.sec*1000;S.timer.h=setInterval(()=>{if(Date.now()>=S.timer.end)stopTimer(true);else tick()},250);render(true)},
+ timerStop(){stopTimer(false)},
+ rmcalc(){sheet('RM計算機','<div class="set" style="grid-template-columns:1fr;background:var(--surface);border:1px solid var(--line);border-radius:12px"><div class="main" style="justify-content:center"><div class="step"><input id="rm-w" type="number" inputmode="decimal" value="80" aria-label="重量"></div><span class="unit">kg ×</span><div class="step reps"><input id="rm-r" type="number" inputmode="numeric" value="8" aria-label="回数"></div><span class="unit">回</span></div></div><div class="rmout" id="rm-out"></div><div class="rmtable" id="rm-tb"></div><p class="note">換算式：重量 ×（1 + 回数 ÷ 40）</p>');updRM()},
+ copyday(){const ks=Object.keys(logs).filter(k=>k!==S.date&&trained(k)).sort().reverse().slice(0,12);
+  sheet('過去の日からコピー','<p class="muted" style="margin:0">選んだ日のメニュー（種目・重量・回数）を '+slash(S.date)+' にコピーします。</p><div class="list">'+ks.map(k=>{const its=logs[k].items,ps=[...new Set(its.map(i=>exOf(i.ex).part))];
+   return '<button class="row" data-act="doCopyDay" data-arg="'+k+'"><span class="t"><b class="num">'+slash(k)+' ('+WD[fromKey(k).getDay()]+')</b><small>'+its.map(i=>exOf(i.ex).n).join('・')+'</small></span>'+ps.map(p=>'<i class="dot" style="background:'+partOf(p).c+'"></i>').join('')+'</button>'}).join('')+'</div>')},
+ doCopyDay(k){const log=logs[S.date]||(logs[S.date]={memo:'',items:[]});logs[k].items.forEach(it=>{if(!log.items.some(x=>x.ex===it.ex))log.items.push({ex:it.ex,sets:it.sets.filter(valid).map(s=>({w:s.w,r:s.r,memo:'',assist:false}))})});closeSheet();render(true);toast(slash(k)+' のメニューをコピーしました')},
+ saveBody(){const w=+$('#bw').value,f=+$('#bf').value;if(!w&&!f){toast('体重か体脂肪率を入力してください');return}body[TK]={w:w||undefined,f:f||undefined};render(true);toast('今日の体組成を記録しました')},
+ closeSheet,closeSheetBg(v,t,e){if(e.target===t)closeSheet()},
+ todo(){toast('モックのため、この項目はまだ動きません')}
+};
+document.addEventListener('click',e=>{const t=e.target.closest('[data-act]');if(t&&A[t.dataset.act])A[t.dataset.act](t.dataset.arg,t,e)});
+document.addEventListener('input',e=>{const t=e.target;
+  if(t.dataset.f){const i=+t.dataset.i,s=curItem(true).sets[i];s[t.dataset.f]=t.dataset.f==='memo'?t.value:(t.value===''?null:+t.value);const o=$('#rm-'+i);if(o)o.textContent=valid(s)?'RM '+f2(rm(s.w,s.r))+'kg':''}
+  else if(t.id==='rm-w'||t.id==='rm-r')updRM();
+  else if(t.id==='daymemo'){(logs[S.date]||(logs[S.date]={memo:'',items:[]})).memo=t.value}
+  else if(t.id==='tsec')S.timer.sec=+t.value||S.timer.sec});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
+render();
+})();
+</script>
