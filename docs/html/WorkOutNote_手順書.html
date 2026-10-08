@@ -1,0 +1,332 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WorkOut Note 手順書</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#F4EFEE; --surface:#FFFFFF; --sunk:#FAF6F5; --ink:#2B2021; --ink-2:#6B5E5F; --line:#E0D6D5; --line-2:#B9ABAA;
+  --accent:#C9332F; --accent-weak:#FBE9E8; --blue:#2F6FAE; --blue-weak:#E6EFF8; --green:#2E8B62; --green-weak:#E3F3EB; --amber:#A9741A; --amber-weak:#FAF0DC;
+  --disp:"Oswald","Arial Narrow","Noto Sans JP",sans-serif; --body:"Noto Sans JP","Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif; --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141112; --surface:#1E1A1B; --sunk:#262122; --ink:#F1EBEB; --ink-2:#A99C9C; --line:#352D2E; --line-2:#5A4E4F;
+  --accent:#EC5F5A; --accent-weak:#3A1C1C; --blue:#7FB2E6; --blue-weak:#1B2A3A; --green:#66C79A; --green-weak:#16302A; --amber:#E0B45C; --amber-weak:#33290F;
+}}
+:root[data-theme="dark"]{
+  --bg:#141112; --surface:#1E1A1B; --sunk:#262122; --ink:#F1EBEB; --ink-2:#A99C9C; --line:#352D2E; --line-2:#5A4E4F;
+  --accent:#EC5F5A; --accent-weak:#3A1C1C; --blue:#7FB2E6; --blue-weak:#1B2A3A; --green:#66C79A; --green-weak:#16302A; --amber:#E0B45C; --amber-weak:#33290F;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.8}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:20px;padding-block:28px 64px;display:flex;flex-direction:column;gap:28px}
+header.doc{border-bottom:3px solid var(--accent);padding-bottom:16px;display:flex;flex-direction:column;gap:6px}
+.kicker{font-family:var(--disp);letter-spacing:.14em;color:var(--accent);font-size:14px}
+h1{margin:0;font-size:clamp(24px,4.4vw,34px);line-height:1.3;text-wrap:balance}
+.meta{color:var(--ink-2);font-size:13px;display:flex;flex-wrap:wrap;gap:4px 18px}
+.lead{max-width:46em;margin:0}
+nav.toc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 18px}
+nav.toc b{font-size:13px;color:var(--ink-2);letter-spacing:.08em}
+nav.toc ol{margin:6px 0 0;padding-left:1.4em;columns:2;column-gap:32px;font-size:14px}
+@media (max-width:640px){nav.toc ol{columns:1}}
+a{color:var(--accent);overflow-wrap:anywhere}
+section{display:flex;flex-direction:column;gap:14px}
+h2{margin:0;font-size:21px;line-height:1.4;padding-left:12px;border-left:5px solid var(--accent);text-wrap:balance}
+h3{margin:10px 0 0;font-size:16.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+p{margin:0;max-width:48em}
+ul,ol{margin:0;padding-left:1.5em;max-width:48em}
+li{margin:3px 0}
+code{font-family:var(--mono);font-size:.9em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:0 4px;overflow-wrap:anywhere}
+pre{margin:0;background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.6}
+pre code{background:none;border:0;padding:0;overflow-wrap:normal}
+.ui{display:inline-block;background:var(--surface);border:1px solid var(--line-2);border-bottom-width:2px;border-radius:6px;padding:0 7px;font-size:.92em;font-weight:500;line-height:1.6}
+.tag{font-size:11.5px;font-weight:700;border-radius:20px;padding:1px 10px;border:1px solid}
+.tag.done{color:var(--green);border-color:var(--green);background:var(--green-weak)}
+.tag.check{color:var(--amber);border-color:var(--amber);background:var(--amber-weak)}
+.tag.who{color:var(--blue);border-color:var(--blue);background:var(--blue-weak)}
+ol.steps{list-style:none;padding:0;counter-reset:st;display:flex;flex-direction:column;gap:8px;max-width:none}
+ol.steps>li{counter-increment:st;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px 10px 52px;position:relative;margin:0}
+ol.steps>li::before{content:counter(st);position:absolute;left:14px;top:11px;width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-family:var(--disp);font-size:14px;display:grid;place-items:center}
+ol.steps>li>p,ol.steps>li>ul{max-width:46em}
+figure.fig{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 14px 12px}
+.scroll{overflow-x:auto}
+figure.fig svg{display:block;width:100%;height:auto;min-width:780px;font-family:var(--body)}
+figcaption{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:13.5px;color:var(--ink-2)}
+figcaption b{color:var(--ink)}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:640px}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--sunk);font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:700}
+.note,.warn{border-radius:10px;padding:12px 14px;font-size:14px;border:1px solid var(--line);background:var(--surface);border-left:5px solid var(--blue)}
+.warn{border-left-color:var(--amber)}
+.note b:first-child,.warn b:first-child{display:block;font-size:13px;letter-spacing:.04em}
+footer{color:var(--ink-2);font-size:12.5px;border-top:1px solid var(--line);padding-top:14px}
+.d-box{fill:var(--surface);stroke:var(--line-2);stroke-width:1.5}
+.d-red{fill:var(--accent-weak);stroke:var(--accent);stroke-width:1.5}
+.d-blue{fill:var(--blue-weak);stroke:var(--blue);stroke-width:1.5}
+.d-green{fill:var(--green-weak);stroke:var(--green);stroke-width:1.5}
+.d-amber{fill:var(--amber-weak);stroke:var(--amber);stroke-width:1.5}
+.d-t{fill:var(--ink);font-size:13.5px;font-weight:700}
+.d-s{fill:var(--ink-2);font-size:11.5px}
+.d-l{fill:var(--ink);font-size:12px;font-weight:500}
+.d-ln{stroke:var(--ink-2);stroke-width:1.6;fill:none}
+.d-ah{fill:var(--ink-2)}
+.d-num{fill:var(--accent)}.d-num-t{fill:#fff;font-family:var(--disp);font-size:13px;text-anchor:middle}
+.d-ico{fill:none;stroke:var(--ink);stroke-width:1.6}
+@media print{body{background:#fff}.wrap{padding-block:0}figure.fig,nav.toc,ol.steps>li{break-inside:avoid}}
+</style>
+
+<div class="wrap">
+<header class="doc">
+  <div class="kicker">WORKOUT NOTE / OPERATION MANUAL</div>
+  <h1>WorkOut Note 手順書</h1>
+  <div class="meta"><span>対象バージョン：v1.1.1</span><span>作成日：2026-09-17</span><span>関連：構成図・設計書（同フォルダ）</span></div>
+  <p class="lead">セットアップから日々の使い方、アプリを修正して公開し直す手順、困った時の対処までを1冊にまとめました。<b>パスワードの入力やログインは必ずご本人が行います</b>（作業を手伝う AI や第三者に伝える必要はありません）。</p>
+</header>
+
+<nav class="toc" aria-label="目次"><b>目次</b>
+<ol>
+  <li><a href="#s1">全体の流れと現在の状況</a></li>
+  <li><a href="#s2">初期セットアップ A：Firebase</a></li>
+  <li><a href="#s3">初期セットアップ B：GitHub</a></li>
+  <li><a href="#s4">公開前の設定（ルール・承認ドメイン・Pages）</a></li>
+  <li><a href="#s5">iPhone と PC で使い始める</a></li>
+  <li><a href="#s6">日々の使い方</a></li>
+  <li><a href="#s7">アプリを修正して公開し直す</a></li>
+  <li><a href="#s8">PC のローカルで動かす・テストする</a></li>
+  <li><a href="#s9">困った時は</a></li>
+  <li><a href="#s10">データの保全と注意点</a></li>
+</ol></nav>
+
+<section id="s1">
+  <h2>1. 全体の流れと現在の状況</h2>
+  <figure class="fig"><div class="scroll">
+  <svg viewBox="0 0 960 190" role="img" aria-label="セットアップの全体の流れ。Firebaseの準備、GitHubの準備、公開前の設定、初回アップロードと公開、iPhoneとPCで使い始める、の5段階。">
+    <defs><marker id="m1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" class="d-ah"/></marker></defs>
+    <rect x="5" y="40" width="150" height="116" rx="10" class="d-blue"/><rect x="205" y="40" width="150" height="116" rx="10" class="d-amber"/><rect x="405" y="40" width="150" height="116" rx="10" class="d-blue"/><rect x="605" y="40" width="150" height="116" rx="10" class="d-amber"/><rect x="805" y="40" width="150" height="116" rx="10" class="d-red"/>
+    <line x1="157" y1="98" x2="202" y2="98" class="d-ln" marker-end="url(#m1)"/><line x1="357" y1="98" x2="402" y2="98" class="d-ln" marker-end="url(#m1)"/><line x1="557" y1="98" x2="602" y2="98" class="d-ln" marker-end="url(#m1)"/><line x1="757" y1="98" x2="802" y2="98" class="d-ln" marker-end="url(#m1)"/>
+    <circle cx="80" cy="40" r="12" class="d-num"/><text x="80" y="45" class="d-num-t">A</text><circle cx="280" cy="40" r="12" class="d-num"/><text x="280" y="45" class="d-num-t">B</text><circle cx="480" cy="40" r="12" class="d-num"/><text x="480" y="45" class="d-num-t">C</text><circle cx="680" cy="40" r="12" class="d-num"/><text x="680" y="45" class="d-num-t">D</text><circle cx="880" cy="40" r="12" class="d-num"/><text x="880" y="45" class="d-num-t">E</text>
+    <text x="80" y="82" text-anchor="middle" class="d-t">Firebase の準備</text><text x="80" y="104" text-anchor="middle" class="d-s">プロジェクト作成</text><text x="80" y="121" text-anchor="middle" class="d-s">ログイン・DBを有効化</text><text x="80" y="142" text-anchor="middle" class="d-l">→ 2章</text>
+    <text x="280" y="82" text-anchor="middle" class="d-t">GitHub の準備</text><text x="280" y="104" text-anchor="middle" class="d-s">公開リポジトリを</text><text x="280" y="121" text-anchor="middle" class="d-s">作成</text><text x="280" y="142" text-anchor="middle" class="d-l">→ 3章</text>
+    <text x="480" y="82" text-anchor="middle" class="d-t">公開前の設定</text><text x="480" y="104" text-anchor="middle" class="d-s">セキュリティルール</text><text x="480" y="121" text-anchor="middle" class="d-s">承認済みドメイン</text><text x="480" y="142" text-anchor="middle" class="d-l">→ 4章</text>
+    <text x="680" y="82" text-anchor="middle" class="d-t">アップロードと公開</text><text x="680" y="104" text-anchor="middle" class="d-s">git push</text><text x="680" y="121" text-anchor="middle" class="d-s">Pages を有効化</text><text x="680" y="142" text-anchor="middle" class="d-l">→ 4章・7章</text>
+    <text x="880" y="82" text-anchor="middle" class="d-t">使い始める</text><text x="880" y="104" text-anchor="middle" class="d-s">ログイン</text><text x="880" y="121" text-anchor="middle" class="d-s">ホーム画面に追加</text><text x="880" y="142" text-anchor="middle" class="d-l">→ 5章</text>
+    <text x="5" y="180" class="d-s">青＝Firebase コンソールでの作業　黄＝GitHub での作業　赤＝端末での作業</text>
+  </svg></div>
+  <figcaption><b>図1　セットアップの全体の流れ。</b>A〜D は最初の1回だけです。作り直す時や別のアカウントで立ち上げ直す時にも、この順に進めれば再現できます。</figcaption></figure>
+
+  <div class="tbl"><table>
+    <tr><th>段階</th><th>内容</th><th>状況（2026-09-17 時点）</th></tr>
+    <tr><td>A</td><td>Firebase プロジェクト <code>workout-note-b45cd</code> の作成、Google ログイン有効化、Firestore 作成、ウェブアプリ登録</td><td><span class="tag done">済</span></td></tr>
+    <tr><td>B</td><td>GitHub リポジトリ <code>tsukujigawa99/workout-note</code>（Public）の作成</td><td><span class="tag done">済</span></td></tr>
+    <tr><td>C</td><td>Firestore セキュリティルールの適用、承認済みドメインに <code>tsukujigawa99.github.io</code> を追加</td><td><span class="tag check">要確認</span> 未実施ならログイン後に権限エラーになります</td></tr>
+    <tr><td>D</td><td>初回アップロード、GitHub Pages の公開</td><td><span class="tag done">済</span> 公開URL：<a href="https://tsukujigawa99.github.io/workout-note/">https://tsukujigawa99.github.io/workout-note/</a></td></tr>
+    <tr><td>E</td><td>PC・iPhone でのログイン、ホーム画面への追加、同期の確認</td><td><span class="tag check">これから</span></td></tr>
+  </table></div>
+</section>
+
+<section id="s2">
+  <h2>2. 初期セットアップ A：Firebase <span class="tag who">ご本人作業</span></h2>
+  <p>記録の保管庫とログイン機能を用意します。費用は 0 円です。途中でクレジットカードの登録を求められたら、進まずに中止してください（無料の Spark プランでは不要です）。</p>
+  <h3>A-1　プロジェクトを作る</h3>
+  <ol class="steps">
+    <li><a href="https://console.firebase.google.com/">https://console.firebase.google.com/</a> を開き、iPhone でも使う<b>個人の Google アカウント</b>でログインします。</li>
+    <li><span class="ui">プロジェクトを作成</span> → 名前 <code>workout-note</code> → 続行。</li>
+    <li>Google アナリティクスは<b>オフ</b>のまま <span class="ui">プロジェクトを作成</span>。</li>
+    <li>左下の料金プランが <b>Spark（無料）</b>であることを確認します。</li>
+  </ol>
+  <h3>A-2　Google ログインを有効にする</h3>
+  <ol class="steps">
+    <li>左メニュー <span class="ui">構築</span> → <span class="ui">Authentication</span> → <span class="ui">始める</span>。</li>
+    <li><span class="ui">ログイン方法</span> タブ → <span class="ui">Google</span> → <b>有効にする</b> → サポートメールに自分のアドレスを選び <span class="ui">保存</span>。</li>
+  </ol>
+  <h3>A-3　データベース（Firestore）を作る</h3>
+  <ol class="steps">
+    <li>左メニュー <span class="ui">構築</span> → <span class="ui">Firestore Database</span> → <span class="ui">データベースの作成</span>。</li>
+    <li>ロケーションは <code>asia-northeast1 (Tokyo)</code>。<b>後から変更できません。</b></li>
+    <li><b>本番環境モード</b>で開始 → 作成。</li>
+  </ol>
+  <h3>A-4　ウェブアプリを登録して接続情報を得る</h3>
+  <ol class="steps">
+    <li>プロジェクトの概要 → <span class="ui">アプリを追加</span> → <b>ウェブ（&lt;/&gt;）</b>。</li>
+    <li>ニックネーム <code>WorkOut Note</code>。「Firebase Hosting も設定する」は<b>チェックしない</b> → 登録。</li>
+    <li>表示された <code>firebaseConfig = { … }</code> の中身を <code>app/js/firebase-config.js</code> に反映します（現在は設定済み）。</li>
+  </ol>
+  <div class="note"><b>firebaseConfig は秘密情報ではありません</b>これは「接続先の住所」で、Web アプリでは公開される前提の値です。データを守るのは Google ログインとセキュリティルール（4章）です。</div>
+</section>
+
+<section id="s3">
+  <h2>3. 初期セットアップ B：GitHub <span class="tag who">ご本人作業</span></h2>
+  <ol class="steps">
+    <li><a href="https://github.com/">https://github.com/</a> でアカウントを作成（またはログイン）します。</li>
+    <li>右上の <span class="ui">＋</span> → <span class="ui">New repository</span> → 名前 <code>workout-note</code>、<b>Public</b> を選んで <span class="ui">Create repository</span>。
+      <ul><li>Public にするのは、無料プランで GitHub Pages を使うためです。公開されるのはプログラムだけで、トレーニング記録は含まれません。</li></ul></li>
+    <li>リポジトリの URL（<code>https://github.com/tsukujigawa99/workout-note.git</code>）を控えます。</li>
+  </ol>
+</section>
+
+<section id="s4">
+  <h2>4. 公開前の設定 <span class="tag who">ご本人作業</span></h2>
+  <h3>4-1　Firestore のセキュリティルールを貼る</h3>
+  <ol class="steps">
+    <li>Firebase コンソール → <span class="ui">Firestore Database</span> → 上部の <span class="ui">ルール</span> タブ。</li>
+    <li>表示されている内容を<b>すべて消して</b>下を貼り付け、<span class="ui">公開</span> を押します。
+<pre><code>rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null &amp;&amp; request.auth.uid == uid;
+    }
+  }
+}</code></pre>
+      <p>意味：「ログインしている本人の <code>users/本人ID/</code> 以下だけ読み書きできる。それ以外はすべて拒否」。同じ内容がリポジトリの <code>firestore.rules</code> にもあります。</p></li>
+  </ol>
+  <h3>4-2　ログインを許可するサイトを追加する</h3>
+  <ol class="steps">
+    <li>Firebase コンソール → <span class="ui">Authentication</span> → <span class="ui">設定</span> タブ → <span class="ui">承認済みドメイン</span>。</li>
+    <li><span class="ui">ドメインを追加</span> → <code>tsukujigawa99.github.io</code> を入力して追加します。<code>localhost</code> は最初から入っています。</li>
+  </ol>
+  <h3>4-3　初回アップロードと GitHub Pages の有効化</h3>
+  <ol class="steps">
+    <li>PC のターミナル（PowerShell やコマンドプロンプト）で次を実行します。GitHub のログイン画面が開いたら、ご本人がブラウザでログインして許可します。
+<pre><code>git -C C:\AgDev\claude\kintore-memo push -u origin main</code></pre>
+      <p><code>branch 'main' set up to track 'origin/main'</code> と出れば成功です。認証情報は PC に保存され、次回からは聞かれません。</p></li>
+    <li>GitHub のリポジトリ → <span class="ui">Settings</span> → 左メニュー <span class="ui">Pages</span> → <b>Source</b> を <span class="ui">GitHub Actions</span> にします（保存ボタンはありません）。</li>
+    <li><span class="ui">Actions</span> タブで「Deploy to GitHub Pages」に緑のチェックが付けば公開完了です。走っていなければ、その名前を選んで <span class="ui">Run workflow</span> を押します。</li>
+  </ol>
+</section>
+
+<section id="s5">
+  <h2>5. iPhone と PC で使い始める</h2>
+  <h3>PC</h3>
+  <ol class="steps">
+    <li>Chrome か Edge で <a href="https://tsukujigawa99.github.io/workout-note/">https://tsukujigawa99.github.io/workout-note/</a> を開き、ブックマークします。</li>
+    <li>ホームの案内カードの <span class="ui">Googleでログイン</span> を押し、開いたウィンドウでアカウントを選びます。設定画面に自分のメールアドレスが出れば成功です。</li>
+    <li>その端末に未ログインで入れた記録がある場合は、「クラウドにアップロードしますか」と聞かれます。残したい記録なら <span class="ui">アップロード</span> を選びます。</li>
+  </ol>
+  <h3>iPhone</h3>
+  <figure class="fig"><div class="scroll">
+  <svg viewBox="0 0 960 180" role="img" aria-label="iPhoneへの入れ方。Safariで公開URLを開く、共有ボタンを押す、ホーム画面に追加を選ぶ、ホーム画面のアイコンから起動してログインする、の4段階。">
+    <defs><marker id="m5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" class="d-ah"/></marker></defs>
+    <rect x="10" y="36" width="200" height="120" rx="10" class="d-red"/><rect x="260" y="36" width="200" height="120" rx="10" class="d-red"/><rect x="510" y="36" width="200" height="120" rx="10" class="d-red"/><rect x="760" y="36" width="190" height="120" rx="10" class="d-red"/>
+    <line x1="212" y1="96" x2="257" y2="96" class="d-ln" marker-end="url(#m5)"/><line x1="462" y1="96" x2="507" y2="96" class="d-ln" marker-end="url(#m5)"/><line x1="712" y1="96" x2="757" y2="96" class="d-ln" marker-end="url(#m5)"/>
+    <circle cx="110" cy="36" r="12" class="d-num"/><text x="110" y="41" class="d-num-t">1</text><circle cx="360" cy="36" r="12" class="d-num"/><text x="360" y="41" class="d-num-t">2</text><circle cx="610" cy="36" r="12" class="d-num"/><text x="610" y="41" class="d-num-t">3</text><circle cx="855" cy="36" r="12" class="d-num"/><text x="855" y="41" class="d-num-t">4</text>
+    <text x="110" y="80" text-anchor="middle" class="d-t">Safari で開く</text><text x="110" y="102" text-anchor="middle" class="d-s">公開URLを Safari で開く</text><text x="110" y="120" text-anchor="middle" class="d-s">（Chrome ではなく Safari）</text>
+    <text x="360" y="80" text-anchor="middle" class="d-t">共有ボタン</text>
+    <rect x="350" y="96" width="20" height="22" rx="3" class="d-ico"/><path d="M360 108V88M353 94l7 -7l7 7" class="d-ico"/><text x="360" y="140" text-anchor="middle" class="d-s">画面下の □に↑ のボタン</text>
+    <text x="610" y="80" text-anchor="middle" class="d-t">ホーム画面に追加</text><text x="610" y="102" text-anchor="middle" class="d-s">メニューを下へ送り</text><text x="610" y="120" text-anchor="middle" class="d-s">「ホーム画面に追加」→ 追加</text>
+    <text x="855" y="80" text-anchor="middle" class="d-t">アイコンから起動</text><text x="855" y="102" text-anchor="middle" class="d-s">赤いダンベルのアイコン</text><text x="855" y="120" text-anchor="middle" class="d-s">開いたらログインする</text>
+  </svg></div>
+  <figcaption><b>図2　iPhone への入れ方。</b>Safari とホーム画面のアプリはログイン情報が別々に管理されます。Safari でログイン済みでも、ホーム画面のアプリ側でもう一度ログインが必要です。</figcaption></figure>
+  <div class="warn"><b>ホーム画面のアプリからログインできない場合</b>iOS のバージョンによっては、ホーム画面アプリから開く Google のログインウィンドウがうまく戻らないことがあります。表示されたメッセージ（またはスクリーンショット）を控えて開発担当へ連絡してください。別のログイン方式に切り替えて対応します。その間も Safari からは利用できます。</div>
+</section>
+
+<section id="s6">
+  <h2>6. 日々の使い方</h2>
+  <figure class="fig"><div class="scroll">
+  <svg viewBox="0 0 960 180" role="img" aria-label="記録の基本の流れ。ホームでトレーニングを追加を押す、部位と種目を選ぶ、重量と回数を入力する、必要ならタイマーを開始、記録して戻るとホームに反映される。">
+    <defs><marker id="m6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" class="d-ah"/></marker></defs>
+    <rect x="5" y="36" width="150" height="120" rx="10" class="d-box"/><rect x="205" y="36" width="150" height="120" rx="10" class="d-box"/><rect x="405" y="36" width="150" height="120" rx="10" class="d-red"/><rect x="605" y="36" width="150" height="120" rx="10" class="d-box"/><rect x="805" y="36" width="150" height="120" rx="10" class="d-box"/>
+    <line x1="157" y1="96" x2="202" y2="96" class="d-ln" marker-end="url(#m6)"/><line x1="357" y1="96" x2="402" y2="96" class="d-ln" marker-end="url(#m6)"/><line x1="557" y1="96" x2="602" y2="96" class="d-ln" marker-end="url(#m6)"/><line x1="757" y1="96" x2="802" y2="96" class="d-ln" marker-end="url(#m6)"/>
+    <circle cx="80" cy="36" r="12" class="d-num"/><text x="80" y="41" class="d-num-t">1</text><circle cx="280" cy="36" r="12" class="d-num"/><text x="280" y="41" class="d-num-t">2</text><circle cx="480" cy="36" r="12" class="d-num"/><text x="480" y="41" class="d-num-t">3</text><circle cx="680" cy="36" r="12" class="d-num"/><text x="680" y="41" class="d-num-t">4</text><circle cx="880" cy="36" r="12" class="d-num"/><text x="880" y="41" class="d-num-t">5</text>
+    <text x="80" y="80" text-anchor="middle" class="d-t">ホーム</text><text x="80" y="102" text-anchor="middle" class="d-s">「本日のトレーニング</text><text x="80" y="119" text-anchor="middle" class="d-s">を追加」を押す</text>
+    <text x="280" y="80" text-anchor="middle" class="d-t">種目を選ぶ</text><text x="280" y="102" text-anchor="middle" class="d-s">部位 → 種目</text><text x="280" y="119" text-anchor="middle" class="d-s">前回の重量も見える</text>
+    <text x="480" y="80" text-anchor="middle" class="d-t">セットを入力</text><text x="480" y="102" text-anchor="middle" class="d-s">重量 × 回数</text><text x="480" y="119" text-anchor="middle" class="d-s">入力した瞬間に自動保存</text>
+    <text x="680" y="80" text-anchor="middle" class="d-t">休憩タイマー</text><text x="680" y="102" text-anchor="middle" class="d-s">START で開始</text><text x="680" y="119" text-anchor="middle" class="d-s">終了を音で知らせる</text>
+    <text x="880" y="80" text-anchor="middle" class="d-t">ホームに反映</text><text x="880" y="102" text-anchor="middle" class="d-s">カレンダーが塗られ</text><text x="880" y="119" text-anchor="middle" class="d-s">負荷量が増える</text>
+  </svg></div>
+  <figcaption><b>図3　記録の基本の流れ。</b>保存ボタンはありません。入力した時点で保存されるので、途中でアプリを閉じても記録は残ります。</figcaption></figure>
+  <div class="tbl"><table>
+    <tr><th>やりたいこと</th><th>操作</th></tr>
+    <tr><td>別の日に記録する</td><td>ホームのカレンダーで日付をタップしてから「トレーニングを追加」。月名をタップすると今日に戻ります。</td></tr>
+    <tr><td>前回と同じ内容で始める</td><td>セット入力画面の Last Record にある <span class="ui">コピー</span>。すでに入力がある時は確認が出ます。</td></tr>
+    <tr><td>過去の日のメニューを丸ごと使う</td><td>ホームの <span class="ui">過去の日からコピー</span> → 日付を選ぶ。すでにある種目は重複しません。</td></tr>
+    <tr><td>重量をすばやく変える</td><td>重量の <span class="ui">−</span> <span class="ui">＋</span>。1回の増減幅は 設定 →「重量の増減ステップ」で変更（1 / 1.25 / 2.5 / 5 kg）。</td></tr>
+    <tr><td>セットを消す・戻す</td><td>ゴミ箱で削除。直後に出る <span class="ui">元に戻す</span> で復元できます（約5秒・直前の1件）。</td></tr>
+    <tr><td>補助してもらったセットに印</td><td>そのセットの <span class="ui">✓ 補助</span> をタップ。</td></tr>
+    <tr><td>伸びを確認する</td><td>下部タブ <span class="ui">履歴/分析</span> → 種目を選ぶ。推定1RM と総ボリュームのグラフ、日付ごとの記録。</td></tr>
+    <tr><td>体重・体脂肪を記録する</td><td>下部タブ <span class="ui">体組成</span>。日付を変えて過去分も入力できます。</td></tr>
+    <tr><td>種目を足す・名前を変える・隠す</td><td>設定 →「部位・種目の管理」。削除ではなく非表示にするので、過去の記録は残ります。</td></tr>
+    <tr><td>RM を計算する</td><td>ホームの <span class="ui">RM計算機</span>。重量と回数から推定1RM と回数別の目安重量を表示。</td></tr>
+    <tr><td>赤／黒テーマを切り替える</td><td>ホーム右上の ◐ ボタン。端末ごとに記憶されます。</td></tr>
+    <tr><td>同期の状態を見る</td><td>設定 →「アカウント／同期」。送信待ちやオフラインの時だけ、ホームの上部にも小さく表示されます。</td></tr>
+  </table></div>
+  <div class="note"><b>電波がない場所で使う時</b>一度でもオンラインでログイン・同期した端末なら、機内モードでも起動して記録できます。記録は「送信待ち」として端末に貯まり、つながった時に自動で送られます。初めてログインする端末だけは、最初の読み込みが終わるまでオンラインである必要があります。</div>
+</section>
+
+<section id="s7">
+  <h2>7. アプリを修正して公開し直す</h2>
+  <figure class="fig"><div class="scroll">
+  <svg viewBox="0 0 960 180" role="img" aria-label="更新の流れ。プログラムを修正、版番号を2か所上げる、自動テストと動作確認、コミットしてpush、1から2分で公開され端末は次の起動から新しい版になる。">
+    <defs><marker id="m7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" class="d-ah"/></marker></defs>
+    <rect x="5" y="36" width="150" height="120" rx="10" class="d-box"/><rect x="205" y="36" width="150" height="120" rx="10" class="d-amber"/><rect x="405" y="36" width="150" height="120" rx="10" class="d-green"/><rect x="605" y="36" width="150" height="120" rx="10" class="d-box"/><rect x="805" y="36" width="150" height="120" rx="10" class="d-red"/>
+    <line x1="157" y1="96" x2="202" y2="96" class="d-ln" marker-end="url(#m7)"/><line x1="357" y1="96" x2="402" y2="96" class="d-ln" marker-end="url(#m7)"/><line x1="557" y1="96" x2="602" y2="96" class="d-ln" marker-end="url(#m7)"/><line x1="757" y1="96" x2="802" y2="96" class="d-ln" marker-end="url(#m7)"/>
+    <circle cx="80" cy="36" r="12" class="d-num"/><text x="80" y="41" class="d-num-t">1</text><circle cx="280" cy="36" r="12" class="d-num"/><text x="280" y="41" class="d-num-t">2</text><circle cx="480" cy="36" r="12" class="d-num"/><text x="480" y="41" class="d-num-t">3</text><circle cx="680" cy="36" r="12" class="d-num"/><text x="680" y="41" class="d-num-t">4</text><circle cx="880" cy="36" r="12" class="d-num"/><text x="880" y="41" class="d-num-t">5</text>
+    <text x="80" y="80" text-anchor="middle" class="d-t">修正する</text><text x="80" y="102" text-anchor="middle" class="d-s">app/ 以下のファイル</text>
+    <text x="280" y="80" text-anchor="middle" class="d-t">版番号を上げる</text><text x="280" y="102" text-anchor="middle" class="d-s">sw.js と defaults.js</text><text x="280" y="119" text-anchor="middle" class="d-s">の2か所（必須）</text>
+    <text x="480" y="80" text-anchor="middle" class="d-t">テストする</text><text x="480" y="102" text-anchor="middle" class="d-s">tests/test.html が全PASS</text><text x="480" y="119" text-anchor="middle" class="d-s">ローカルで動作確認</text>
+    <text x="680" y="80" text-anchor="middle" class="d-t">commit → push</text><text x="680" y="102" text-anchor="middle" class="d-s">main に push すると</text><text x="680" y="119" text-anchor="middle" class="d-s">自動で公開が始まる</text>
+    <text x="880" y="80" text-anchor="middle" class="d-t">端末に反映</text><text x="880" y="102" text-anchor="middle" class="d-s">公開まで1〜2分</text><text x="880" y="119" text-anchor="middle" class="d-s">開き直すと新しい版</text>
+  </svg></div>
+  <figcaption><b>図4　更新の流れ。</b>②を忘れると、端末が古いファイルの控えを使い続けて更新が届きません。</figcaption></figure>
+  <ol class="steps">
+    <li><code>C:\AgDev\claude\kintore-memo\app\</code> 以下を修正します。見た目は <code>css/app.css</code>、画面は <code>js/screens/</code>、計算は <code>js/calc.js</code> です（詳しくは設計書）。</li>
+    <li>版番号を<b>2か所</b>上げます。
+      <ul><li><code>app/sw.js</code> の <code>CACHE_VERSION</code>（例：<code>v1.1.1</code> → <code>v1.1.2</code>）</li><li><code>app/js/defaults.js</code> の <code>APP_VERSION</code>（設定画面に表示される番号）</li><li>ファイルを新しく追加した時は、<code>sw.js</code> のアプリシェル一覧にも追加します。</li></ul></li>
+    <li>8章の方法で自動テスト（全件 PASS）とローカルでの動作確認をします。</li>
+    <li>コミットして push します。
+<pre><code>cd C:\AgDev\claude\kintore-memo
+git add -A
+git commit -m "変更内容の説明"
+git push</code></pre></li>
+    <li>GitHub の <span class="ui">Actions</span> タブで緑のチェックを確認します。端末ではアプリを開き直します（1回目で裏に取り込み、2回目から新しい版）。設定画面の版番号で確認できます。</li>
+  </ol>
+  <div class="note"><b>公開されるのは <code>app/</code> フォルダだけ</b><code>docs/</code> や <code>tests/</code> を変更しただけでは公開処理は走りません（リポジトリには保存されます）。</div>
+</section>
+
+<section id="s8">
+  <h2>8. PC のローカルで動かす・テストする</h2>
+  <p>Node.js は不要です。Python の簡易サーバーで動きます。</p>
+  <h3>アプリを開く</h3>
+<pre><code>python -m http.server 8765 --directory C:/AgDev/claude/kintore-memo/app</code></pre>
+  <p>ブラウザで <code>http://localhost:8765/</code> を開きます。<code>localhost</code> は Firebase の承認済みドメインに最初から入っているので、ログインも試せます。公開版とは保存場所が別なので、未ログインで入れた記録は公開版には出ません。</p>
+  <h3>自動テストを走らせる</h3>
+<pre><code>python -m http.server 8766 --directory C:/AgDev/claude/kintore-memo</code></pre>
+  <p><code>http://localhost:8766/tests/test.html</code> を<b>前面のタブで</b>開くと自動で実行され、タブのタイトルと画面に <code>PASS n / FAIL m</code> が出ます（v1.1.1 時点で 150 件）。裏のタブだと完了が遅くなります。</p>
+  <div class="warn"><b>修正が画面に出ない時</b>Service Worker が古い控えを返していることがあります。ブラウザの開発者ツール → Application → Service Workers で <span class="ui">Unregister</span>、Storage で <span class="ui">Clear site data</span> をしてから再読み込みします（未ログインの記録も消えるので注意）。</div>
+</section>
+
+<section id="s9">
+  <h2>9. 困った時は</h2>
+  <div class="tbl"><table>
+    <tr><th>症状</th><th>考えられる原因</th><th>対処</th></tr>
+    <tr><td>ログイン後に「権限がありません」「同期エラー」と出る</td><td>Firestore のセキュリティルールが未適用、または内容が違う</td><td>4-1 のルールを貼り直して「公開」。その後、設定 →「アカウント／同期」→ <span class="ui">再接続</span>（自動でも数十秒おきに再試行します）。</td></tr>
+    <tr><td>「承認済みドメインに追加してください」と出る</td><td>公開サイトのドメインが Firebase に未登録</td><td>4-2 の手順で <code>tsukujigawa99.github.io</code> を追加。</td></tr>
+    <tr><td>ログインのウィンドウが開かない</td><td>ブラウザのポップアップブロック</td><td>アドレスバーのブロック表示から、このサイトのポップアップを許可。</td></tr>
+    <tr><td>iPhone のホーム画面アプリでログインできない</td><td>iOS のポップアップ制限</td><td>5章の注意書きのとおり、メッセージを控えて連絡。当面は Safari で利用。</td></tr>
+    <tr><td>「クラウドの記録を読み込み中です」と出て入力できない</td><td>初めてログインした端末で、最初の読み込みが終わっていない（電波が弱い）</td><td>電波の良い場所で数秒待つ。上書き事故を防ぐための仕様です。</td></tr>
+    <tr><td>もう片方の端末に記録が出ない</td><td>送信側がオフライン／別の Google アカウントでログインしている</td><td>両方の端末の 設定 →「アカウント／同期」でメールアドレスと同期状態を確認。</td></tr>
+    <tr><td>「データの一部を読み込めませんでした（退避済み）」</td><td>端末内データの破損（未ログイン時）</td><td>壊れた元データは <code>won-…-corrupt-日時</code> という名前で端末内に退避されています。復旧が必要なら開発担当へ。</td></tr>
+    <tr><td>タイマーの音が鳴らない</td><td>消音モード、またはアプリが裏に回った／画面ロック中</td><td>iPhone は画面を点けたまま使う。裏に回った場合は、戻った時点で通知されます。</td></tr>
+    <tr><td>更新したのに古い画面のまま</td><td>端末の控え（キャッシュ）が残っている／版番号を上げ忘れた</td><td>アプリを完全に閉じて2回開き直す。直らなければ 7章②を確認。</td></tr>
+    <tr><td>Actions が赤い×で失敗する</td><td>Pages の Source が「GitHub Actions」になっていない等</td><td>4-3 の Settings → Pages を確認し、<span class="ui">Re-run jobs</span>。</td></tr>
+    <tr><td>push でログインを求められて失敗する</td><td>PC に GitHub の認証情報が無い</td><td>ご本人がターミナルで <code>git push</code> を実行し、開いたブラウザでログイン。</td></tr>
+  </table></div>
+</section>
+
+<section id="s10">
+  <h2>10. データの保全と注意点</h2>
+  <ul>
+    <li><b>ログインして使うのが基本です。</b>未ログインの記録はその端末のブラウザの中だけにあり、サイトデータの消去や機種変更で失われます。</li>
+    <li>ログイン中の記録はクラウド（Firestore）にあり、端末を替えてもログインすれば戻ります。中身は Firebase コンソール → Firestore Database →「データ」タブの <code>users / 自分のuid</code> 以下で直接確認できます。</li>
+    <li>2台で<b>同じ日を同時に</b>編集すると、後から保存した方の内容が残ります。片方で入力を終えてからもう片方を使ってください。</li>
+    <li>ログイン前の端末内データは、移行後も消さずに残しています（控えとして）。</li>
+    <li>無料枠の上限（1日あたり読み取り5万回・書き込み2万回）に個人利用で達することはまずありませんが、Firebase コンソールの「使用状況」で確認できます。</li>
+    <li>CSV などへの書き出し機能は未実装です（次版以降の候補）。</li>
+  </ul>
+</section>
+
+<footer>WorkOut Note 手順書 ／ v1.1.1 時点の内容です。手順や画面が変わった時は本書も更新してください。</footer>
+</div>

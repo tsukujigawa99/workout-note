@@ -1,0 +1,401 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WorkOut Note 設計書</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#F4EFEE; --surface:#FFFFFF; --sunk:#FAF6F5; --ink:#2B2021; --ink-2:#6B5E5F; --line:#E0D6D5; --line-2:#B9ABAA;
+  --accent:#C9332F; --accent-weak:#FBE9E8; --blue:#2F6FAE; --blue-weak:#E6EFF8; --green:#2E8B62; --green-weak:#E3F3EB; --amber:#A9741A; --amber-weak:#FAF0DC;
+  --disp:"Oswald","Arial Narrow","Noto Sans JP",sans-serif; --body:"Noto Sans JP","Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif; --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141112; --surface:#1E1A1B; --sunk:#262122; --ink:#F1EBEB; --ink-2:#A99C9C; --line:#352D2E; --line-2:#5A4E4F;
+  --accent:#EC5F5A; --accent-weak:#3A1C1C; --blue:#7FB2E6; --blue-weak:#1B2A3A; --green:#66C79A; --green-weak:#16302A; --amber:#E0B45C; --amber-weak:#33290F;
+}}
+:root[data-theme="dark"]{
+  --bg:#141112; --surface:#1E1A1B; --sunk:#262122; --ink:#F1EBEB; --ink-2:#A99C9C; --line:#352D2E; --line-2:#5A4E4F;
+  --accent:#EC5F5A; --accent-weak:#3A1C1C; --blue:#7FB2E6; --blue-weak:#1B2A3A; --green:#66C79A; --green-weak:#16302A; --amber:#E0B45C; --amber-weak:#33290F;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.8}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:20px;padding-block:28px 64px;display:flex;flex-direction:column;gap:28px}
+header.doc{border-bottom:3px solid var(--accent);padding-bottom:16px;display:flex;flex-direction:column;gap:6px}
+.kicker{font-family:var(--disp);letter-spacing:.14em;color:var(--accent);font-size:14px}
+h1{margin:0;font-size:clamp(24px,4.4vw,34px);line-height:1.3;text-wrap:balance}
+.meta{color:var(--ink-2);font-size:13px;display:flex;flex-wrap:wrap;gap:4px 18px}
+.lead{max-width:46em;margin:0}
+nav.toc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 18px}
+nav.toc b{font-size:13px;color:var(--ink-2);letter-spacing:.08em}
+nav.toc ol{margin:6px 0 0;padding-left:1.6em;columns:2;column-gap:32px;font-size:14px}
+@media (max-width:640px){nav.toc ol{columns:1}}
+a{color:var(--accent);overflow-wrap:anywhere}
+section{display:flex;flex-direction:column;gap:14px}
+h2{margin:0;font-size:21px;line-height:1.4;padding-left:12px;border-left:5px solid var(--accent);text-wrap:balance}
+h3{margin:10px 0 0;font-size:16.5px}
+p{margin:0;max-width:48em}
+ul,ol{margin:0;padding-left:1.5em;max-width:48em}
+li{margin:3px 0}
+code{font-family:var(--mono);font-size:.9em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:0 4px;overflow-wrap:anywhere}
+pre{margin:0;background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.6}
+pre code{background:none;border:0;padding:0;overflow-wrap:normal}
+figure.fig{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 14px 12px}
+.scroll{overflow-x:auto}
+figure.fig svg{display:block;width:100%;height:auto;min-width:780px;font-family:var(--body)}
+figcaption{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:13.5px;color:var(--ink-2)}
+figcaption b{color:var(--ink)}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:680px}
+th,td{padding:8px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--sunk);font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:700}
+td.mono,td code{font-family:var(--mono)}
+.note,.warn{border-radius:10px;padding:12px 14px;font-size:14px;border:1px solid var(--line);background:var(--surface);border-left:5px solid var(--blue)}
+.warn{border-left-color:var(--amber)}
+.note b:first-child,.warn b:first-child{display:block;font-size:13px;letter-spacing:.04em}
+footer{color:var(--ink-2);font-size:12.5px;border-top:1px solid var(--line);padding-top:14px}
+.d-zone{fill:var(--sunk);stroke:var(--line-2);stroke-width:1.2;stroke-dasharray:6 4}
+.d-box{fill:var(--surface);stroke:var(--line-2);stroke-width:1.5}
+.d-red{fill:var(--accent-weak);stroke:var(--accent);stroke-width:1.5}
+.d-blue{fill:var(--blue-weak);stroke:var(--blue);stroke-width:1.5}
+.d-green{fill:var(--green-weak);stroke:var(--green);stroke-width:1.5}
+.d-amber{fill:var(--amber-weak);stroke:var(--amber);stroke-width:1.5}
+.d-t{fill:var(--ink);font-size:13.5px;font-weight:700}
+.d-s{fill:var(--ink-2);font-size:11.5px}
+.d-l{fill:var(--ink);font-size:12px;font-weight:500}
+.d-z{fill:var(--ink-2);font-size:12.5px;font-weight:700;letter-spacing:.06em}
+.d-m{font-family:var(--mono);font-size:10.5px;fill:var(--ink-2)}
+.d-ln{stroke:var(--ink-2);stroke-width:1.6;fill:none}
+.d-dash{stroke-dasharray:5 4}
+.d-ah{fill:var(--ink-2)}
+@media print{body{background:#fff}.wrap{padding-block:0}figure.fig,nav.toc{break-inside:avoid}}
+</style>
+
+<div class="wrap">
+<header class="doc">
+  <div class="kicker">WORKOUT NOTE / DESIGN DOCUMENT</div>
+  <h1>WorkOut Note 設計書</h1>
+  <div class="meta"><span>対象バージョン：v1.1.1</span><span>作成日：2026-09-17</span><span>関連：構成図・手順書（同フォルダ）、docs/01〜05（経緯と詳細仕様）</span></div>
+  <p class="lead">このアプリを後から直す人（将来の自分を含む）が、<b>どこに何があり、なぜそう作ったのか</b>を短時間でつかむための文書です。全体像は構成図、操作と運用は手順書を参照してください。</p>
+</header>
+
+<nav class="toc" aria-label="目次"><b>目次</b>
+<ol>
+  <li><a href="#s1">目的と前提</a></li>
+  <li><a href="#s2">機能一覧</a></li>
+  <li><a href="#s3">画面設計（画面遷移と URL）</a></li>
+  <li><a href="#s4">データ設計</a></li>
+  <li><a href="#s5">計算ルール</a></li>
+  <li><a href="#s6">モジュール設計（ファイル構成）</a></li>
+  <li><a href="#s7">保存の窓口 store の仕様</a></li>
+  <li><a href="#s8">同期設計（クラウドを壊さないための決まり）</a></li>
+  <li><a href="#s9">認証設計</a></li>
+  <li><a href="#s10">PWA・オフライン設計</a></li>
+  <li><a href="#s11">操作の安全設計と入力ルール</a></li>
+  <li><a href="#s12">見た目の設計</a></li>
+  <li><a href="#s13">テスト設計</a></li>
+  <li><a href="#s14">既知の制約と今後の候補</a></li>
+</ol></nav>
+
+<section id="s1">
+  <h2>1. 目的と前提</h2>
+  <div class="tbl"><table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>目的</td><td>市販アプリ（筋トレMEMO）と同等の使い勝手を、広告なし・無料・自分専用で実現する。</td></tr>
+    <tr><td>利用者・端末</td><td>本人1名。iPhone（Safari／ホーム画面アプリ）と PC（Chrome／Edge）。</td></tr>
+    <tr><td>提供形態</td><td>PWA。GitHub Pages で静的配信。公開URL <code>https://tsukujigawa99.github.io/workout-note/</code>（サブパス配信のため、アプリ内の参照はすべて相対パス）。</td></tr>
+    <tr><td>技術上の制約</td><td><b>ビルド工程なし。</b>素の HTML / CSS / JavaScript（ES Modules）。外部ライブラリは Firebase JS SDK 12.19.0（gstatic の CDN から動的 import）と Google Fonts のみ。開発PCに Node.js は不要。</td></tr>
+    <tr><td>データ保存</td><td>ログイン中は Cloud Firestore（東京リージョン、オフラインキャッシュあり）。未ログイン時は端末の localStorage。</td></tr>
+    <tr><td>費用</td><td>0円（GitHub 無料プラン、Firebase Spark プラン）。</td></tr>
+    <tr><td>対象外</td><td>複数ユーザー、SNS、既存アプリからの移行、食事管理、lbs 表示、ヘルスケア連携、CSV 書き出し（次版候補）。</td></tr>
+  </table></div>
+</section>
+
+<section id="s2">
+  <h2>2. 機能一覧</h2>
+  <div class="tbl"><table>
+    <tr><th>機能</th><th>内容</th><th>主な実装場所</th></tr>
+    <tr><td>カレンダー</td><td>月表示。記録のある日は塗り、選択日は白丸（記録ありは小さな点付き）。月名タップで今日へ。</td><td class="mono">screens/home.js</td></tr>
+    <tr><td>負荷量の集計</td><td>7日間（週別バー6本）／28日間／総合計をトン表示。乗用車1.5t・バス15t・旅客機350t換算。当月の実施日数と通算日数。</td><td class="mono">calc.js, home.js</td></tr>
+    <tr><td>トレーニング記録</td><td>日付×種目×セット（重量・回数・メモ・補助）。入力即保存。セットの追加・削除（元に戻す付き）、種目記録の削除。</td><td class="mono">screens/entry.js</td></tr>
+    <tr><td>前回記録の表示・コピー</td><td>選択日より前の直近記録を表示。コピーは重量と回数のみ。入力済みなら確認。</td><td class="mono">entry.js, calc.js</td></tr>
+    <tr><td>過去の日からコピー</td><td>選択日より前の実施日（新しい順30件）から丸ごと複製。既存種目は重複させない。</td><td class="mono">screens/sheets.js</td></tr>
+    <tr><td>種目選択・種目管理</td><td>部位→種目。追加・改名・並び替え・非表示（部位も同様、色選択あり）。同名は拒否。</td><td class="mono">pick.js, master.js</td></tr>
+    <tr><td>履歴と分析</td><td>種目別の推定1RM・総ボリュームのグラフ（期間切替）、日付ごとの記録カード、部位別の種目一覧。</td><td class="mono">history.js, analysis.js, ui.js</td></tr>
+    <tr><td>体組成</td><td>体重・体脂肪率を日別に記録（日付選択可）。推移グラフ。</td><td class="mono">screens/body.js</td></tr>
+    <tr><td>インターバルタイマー</td><td>60/90/120/180秒のプリセット。画面を移っても継続。終了は音と通知。</td><td class="mono">timer.js</td></tr>
+    <tr><td>RM計算機</td><td>推定1RM と回数別（3,5,8,10,12,15回）の目安重量。</td><td class="mono">sheets.js</td></tr>
+    <tr><td>テーマ切替</td><td>赤／黒をボタン1つで切替。端末ごとに記憶（同期しない）。</td><td class="mono">main.js, app.css</td></tr>
+    <tr><td>同期とログイン</td><td>Google ログイン、Firestore 同期、端末内記録の移行、同期状態の表示、再接続。</td><td class="mono">cloud.js, auth.js, store-firebase.js, migrate.js</td></tr>
+  </table></div>
+</section>
+
+<section id="s3">
+  <h2>3. 画面設計（画面遷移と URL）</h2>
+  <figure class="fig"><div class="scroll">
+  <svg viewBox="0 0 960 470" role="img" aria-label="画面遷移図。下部タブのホーム、履歴/分析、体組成、設定が起点。ホームから種目選択を経てセット入力へ進み、セット入力と種目履歴を行き来する。履歴/分析から種目履歴へ、設定から種目管理へ進む。RM計算機などのシートは画面の上に重なって開く。">
+    <defs><marker id="t3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="d-ah"/></marker></defs>
+    <rect x="10" y="10" width="200" height="450" rx="14" class="d-zone"/><text x="24" y="34" class="d-z">下部タブ（4つ）</text>
+    <rect x="28" y="50" width="164" height="70" rx="10" class="d-red"/><text x="110" y="80" text-anchor="middle" class="d-t">ホーム</text><text x="110" y="100" text-anchor="middle" class="d-m">#/home</text>
+    <rect x="28" y="156" width="164" height="70" rx="10" class="d-red"/><text x="110" y="186" text-anchor="middle" class="d-t">履歴/分析</text><text x="110" y="206" text-anchor="middle" class="d-m">#/analysis</text>
+    <rect x="28" y="262" width="164" height="70" rx="10" class="d-red"/><text x="110" y="292" text-anchor="middle" class="d-t">体組成</text><text x="110" y="312" text-anchor="middle" class="d-m">#/body</text>
+    <rect x="28" y="368" width="164" height="70" rx="10" class="d-red"/><text x="110" y="398" text-anchor="middle" class="d-t">設定</text><text x="110" y="418" text-anchor="middle" class="d-m">#/settings</text>
+
+    <rect x="330" y="50" width="190" height="70" rx="10" class="d-box"/><text x="425" y="80" text-anchor="middle" class="d-t">種目選択</text><text x="425" y="100" text-anchor="middle" class="d-m">#/pick/&lt;日付&gt;</text>
+    <rect x="650" y="50" width="220" height="70" rx="10" class="d-box"/><text x="760" y="80" text-anchor="middle" class="d-t">セット入力</text><text x="760" y="100" text-anchor="middle" class="d-m">#/entry/&lt;日付&gt;/&lt;種目ID&gt;</text>
+    <rect x="650" y="196" width="220" height="70" rx="10" class="d-box"/><text x="760" y="226" text-anchor="middle" class="d-t">種目履歴・グラフ</text><text x="760" y="246" text-anchor="middle" class="d-m">#/history/&lt;種目ID&gt;</text>
+    <rect x="330" y="368" width="190" height="70" rx="10" class="d-box"/><text x="425" y="398" text-anchor="middle" class="d-t">部位・種目の管理</text><text x="425" y="418" text-anchor="middle" class="d-m">#/master</text>
+
+    <line x1="194" y1="72" x2="326" y2="72" class="d-ln" marker-end="url(#t3)"/><text x="260" y="64" text-anchor="middle" class="d-l">トレーニングを追加</text>
+    <line x1="522" y1="72" x2="646" y2="72" class="d-ln" marker-end="url(#t3)"/><text x="584" y="64" text-anchor="middle" class="d-l">種目をタップ</text>
+    <path d="M194 104H300V140H700V124" class="d-ln" marker-end="url(#t3)"/><text x="448" y="134" text-anchor="middle" class="d-l">記録カードをタップ（直接開く）</text>
+    <line x1="760" y1="122" x2="760" y2="192" class="d-ln" marker-start="url(#t3)" marker-end="url(#t3)"/><text x="772" y="162" class="d-l">履歴／戻る</text>
+    <line x1="194" y1="212" x2="646" y2="232" class="d-ln" marker-end="url(#t3)"/><text x="400" y="212" text-anchor="middle" class="d-l">種目をタップ</text>
+    <line x1="194" y1="403" x2="326" y2="403" class="d-ln" marker-end="url(#t3)"/><text x="260" y="395" text-anchor="middle" class="d-l">種目の管理</text>
+
+    <rect x="556" y="330" width="396" height="120" rx="12" class="d-amber"/><text x="572" y="356" class="d-t">シート（画面の上に重なって開く）</text>
+    <text x="572" y="380" class="d-s">RM計算機 ／ 過去の日からコピー ／ 確認（コピーの上書き・削除）</text>
+    <text x="572" y="400" class="d-s">名前の入力・編集（種目、部位） ／ ログアウト確認 ／ 移行の確認</text>
+    <text x="572" y="428" class="d-s">開く時に履歴を1段積むので、「戻る」操作ではシートだけが閉じる</text>
+  </svg></div>
+  <figcaption><b>図1　画面遷移。</b>URL の <code>#</code> 以降で画面を切り替える方式（hash ルーティング）です。日付を URL に含めているので、過去の日を入力中に再読み込みしても対象日が変わりません。ホームで選択中の日付は <code>sessionStorage</code>（<code>won-date</code>）に持ち、同じ日のうちだけ復元します。</figcaption></figure>
+  <ul>
+    <li>不正な URL（存在しない画面、壊れた日付、2000-01-01〜今日+1年の範囲外）はホームまたは今日に直し、URL も書き換えます。旧形式 <code>#/entry/&lt;種目ID&gt;</code> は今日として解釈します。</li>
+    <li>マスタに無い種目ID でも、その日に記録があれば「（不明な種目）」として開いて削除できます。</li>
+    <li>タブ同士の切替、種目選択→セット入力は履歴を置き換えます（戻るでホームへ出る）。</li>
+    <li>PC幅（960px以上）は 920px の中央カラム。記録カードは複数列、履歴カードは2列。</li>
+  </ul>
+</section>
+
+<section id="s4">
+  <h2>4. データ設計</h2>
+  <h3>4.1 同期するデータ（Firestore と localStorage で同じ形）</h3>
+<pre><code>days     : { "YYYY-MM-DD": { memo, items: [ { ex: 種目ID, sets: [ { w: number|null, r: number|null, memo, assist: boolean } ] } ], updatedAt } }
+body     : { "YYYY-MM-DD": { w?: 体重kg, f?: 体脂肪率%, updatedAt } }
+master   : { parts: [ { id, name, color, hidden? } ], exercises: [ { id, part, name, hidden? } ], updatedAt }   // 配列の順＝表示順
+settings : { step: 2.5, timerSec: 90, updatedAt }</code></pre>
+  <div class="tbl"><table>
+    <tr><th>データ</th><th>Firestore のパス</th><th>localStorage のキー（未ログイン時）</th></tr>
+    <tr><td>日々の記録</td><td class="mono">users/{uid}/days/{YYYY-MM-DD}</td><td class="mono">won-days</td></tr>
+    <tr><td>体組成</td><td class="mono">users/{uid}/body/{YYYY-MM-DD}</td><td class="mono">won-body</td></tr>
+    <tr><td>部位・種目</td><td class="mono">users/{uid}/meta/master</td><td class="mono">won-master</td></tr>
+    <tr><td>設定</td><td class="mono">users/{uid}/meta/settings</td><td class="mono">won-settings</td></tr>
+  </table></div>
+  <ul>
+    <li><b>種目ID は不変。</b>名称を変えても過去の記録がつながります。新規ID は時刻＋乱数＋連番で衝突を避けます。</li>
+    <li>種目・部位の削除は <code>hidden: true</code>。過去の記録と履歴には名前を出し続け、種目選択にだけ出しません。</li>
+    <li>空になった日（種目なし・メモなし）と空の体組成は、ドキュメントごと削除します。</li>
+    <li>名称は前後の空白を除いて40文字まで。同じ部位内の同名種目、同名の部位は登録できません。</li>
+    <li>日付キーは<b>端末のローカル時刻</b>で作ります（<code>toISOString</code> は UTC になり日付がずれるため使いません）。</li>
+    <li>Firestore には <code>undefined</code> を渡しません（未入力の項目は省く）。</li>
+  </ul>
+  <h3>4.2 端末ごとに持つデータ（同期しない）</h3>
+  <div class="tbl"><table>
+    <tr><th>キー</th><th>場所</th><th>内容</th></tr>
+    <tr><td class="mono">won-skin</td><td>localStorage</td><td>テーマ（red / black）</td></tr>
+    <tr><td class="mono">won-date</td><td>sessionStorage</td><td>ホームで選択中の日付（同じ日のうちだけ復元）</td></tr>
+    <tr><td class="mono">won-auth-hint</td><td>localStorage</td><td>前回ログインしていた印。起動時に端末内データを一瞬見せないための手がかり</td></tr>
+    <tr><td class="mono">won-login-later</td><td>localStorage</td><td>ログイン案内カードで「あとで」を選んだ記憶</td></tr>
+    <tr><td class="mono">won-synced</td><td>localStorage</td><td>uid ごとの「サーバーと同期できた実績」。オフライン起動時にキャッシュを信頼してよいかの判断に使う</td></tr>
+    <tr><td class="mono">won-migrated / won-local-dirty</td><td>localStorage</td><td>端末内記録の移行を確認済みか／未ログイン中に端末内へ追記があったか</td></tr>
+    <tr><td class="mono">won-*-corrupt-&lt;日時&gt;</td><td>localStorage</td><td>読み込めなかった元データの退避（名前ごとに最新2件を保持）</td></tr>
+  </table></div>
+</section>
+
+<section id="s5">
+  <h2>5. 計算ルール</h2>
+  <div class="tbl"><table>
+    <tr><th>項目</th><th>ルール</th></tr>
+    <tr><td>有効セット</td><td>回数 <code>r &gt; 0</code> のセット。重量が空なら 0kg 扱い。</td></tr>
+    <tr><td>推定1RM</td><td><code>w × (1 + r / 40)</code>。小数2桁（履歴カードの MAX は1桁）。検算値：35×15→48.13、35×20→52.50、58×33→105.85（参考にした市販アプリの表示と一致）。</td></tr>
+    <tr><td>ボリューム</td><td>Σ(w × r)。トン表示は kg ÷ 1000 を小数2桁。</td></tr>
+    <tr><td>7日間・28日間</td><td>今日を含む直近7日／28日。週別バーは今日起点で7日ずつ6本（今週、1〜5週前）。</td></tr>
+    <tr><td>乗り物換算</td><td>乗用車 1,500kg、バス 15,000kg、旅客機 350,000kg。小数1桁。</td></tr>
+    <tr><td>実施日数</td><td>有効セットが1つ以上ある日を数える。MONTHLY ARCHIVE は表示中の月、TOTAL は全期間。</td></tr>
+    <tr><td>RM計算機の目安</td><td>目安重量 ＝ 1RM ÷ (1 + 回数 / 40)。回数は 3, 5, 8, 10, 12, 15。</td></tr>
+    <tr><td>グラフの目盛り</td><td>実データの最小・中間・最大を表示（範囲外の数値を出さない）。</td></tr>
+    <tr><td>「今日」</td><td>描画のたびに取得し、日付をまたいだら追従。</td></tr>
+  </table></div>
+  <p>計算は <code>calc.js</code> に純粋関数として集め、画面や保存先に依存させていません。自動テストの主な対象です。</p>
+</section>
+
+<section id="s6">
+  <h2>6. モジュール設計（ファイル構成）</h2>
+<pre><code>kintore-memo/
+├─ app/                       ← 公開される本体（GitHub Pages に出るのはここだけ）
+│  ├─ index.html              ← 入口。viewport、アイコン、manifest、フォント、描画前のテーマ反映
+│  ├─ manifest.webmanifest    ← アプリ名・アイコン・全画面表示の指定
+│  ├─ sw.js                   ← Service Worker（オフライン起動用の控え）
+│  ├─ icons/                  ← アイコン（scripts/make_icons.py で生成）
+│  ├─ css/app.css             ← 見た目すべて。色は :root のトークンで管理
+│  └─ js/
+│     ├─ main.js              ← 司令塔：起動、URL 切替、操作の受付、描画、連打ガード
+│     ├─ state.js             ← 共有状態（選択日など）、go / back
+│     ├─ ui.js                ← 共通部品（エスケープ、アイコン、グラフ、通知トースト）
+│     ├─ calc.js              ← 計算と日付・入力値の正規化（純粋関数）
+│     ├─ timer.js             ← インターバルタイマー
+│     ├─ defaults.js          ← 初期の部位・種目、設定初期値、APP_VERSION
+│     ├─ store.js             ← 保存の窓口＋LocalAdapter
+│     ├─ store-firebase.js    ← FirebaseAdapter
+│     ├─ cloud.js             ← ログイン状態に応じた保存先の切替
+│     ├─ auth.js              ← Firebase SDK の読み込みとログイン
+│     ├─ migrate.js           ← 端末内記録のクラウドへの移行
+│     ├─ firebase-config.js   ← 接続先情報と SDK のバージョン
+│     └─ screens/             ← home / pick / entry / history / analysis / body / settings / master / sheets
+├─ tests/test.html            ← 自動テスト（ブラウザで開くと実行）
+├─ firestore.rules            ← セキュリティルールの控え（適用はコンソールで）
+├─ .github/workflows/pages.yml← main への push で app/ を公開
+├─ mock/mock.html             ← 承認済みの画面モック（見た目の基準）
+├─ scripts/make_icons.py      ← アイコン生成
+└─ docs/                      ← 要件定義書・仕様書・手順書・本書</code></pre>
+  <div class="note"><b>どこを直せばよいかの早見</b>見た目→ <code>css/app.css</code>　／　ある画面の部品や文言→ <code>js/screens/その画面.js</code>　／　数値の計算→ <code>js/calc.js</code>　／　初期の種目→ <code>js/defaults.js</code>　／　同期の挙動→ <code>js/store-firebase.js</code> と <code>js/cloud.js</code>。層の関係は構成図の図4を参照。</div>
+</section>
+
+<section id="s7">
+  <h2>7. 保存の窓口 store の仕様</h2>
+  <p>画面は <code>store</code> だけを使います。<b>読みは同期（メモリ上の一覧から即座に返す）、書きは非同期</b>です。保存先の違いはアダプタが吸収します。</p>
+<pre><code>await store.init()                 // 保存先から読み込み、メモリに展開
+store.onChange(cb)                 // データが変わった時（他端末・他タブの変更を含む）に再描画
+store.days()  / store.day(k)       / store.saveDay(k, day)    // 種目もメモも空なら削除
+store.bodies()/ store.body(k)      / store.saveBody(k, rec) / store.patchBody(k, 変更した項目だけ)
+store.master()/ store.saveMaster(m)
+store.settings()/ store.saveSettings(s)
+store.useAdapter(next)             // 保存先の切替（切替中は全書き込みを拒否）
+store.syncState() / store.onSync(cb) / store.onError(cb) / store.onNotice(cb)</code></pre>
+  <div class="tbl"><table>
+    <tr><th>アダプタ</th><th>使う場面</th><th>保存先</th><th>特記事項</th></tr>
+    <tr><td>LocalAdapter</td><td>未ログイン</td><td>localStorage（JSON）</td><td>読めないデータは退避してから通知。他タブの変更は storage イベントで再読込。書き込み失敗（容量など）は通知。</td></tr>
+    <tr><td>FirebaseAdapter</td><td>ログイン中</td><td>Firestore（IndexedDB の永続キャッシュ付き。使えなければメモリ）</td><td>4つの購読（days, body, meta/master, meta/settings）。書き込みは完了を待たない（オフラインでは完了しないため）。</td></tr>
+  </table></div>
+  <p><code>saveDay</code> は「窓口が持つ最新の1日分に、手元の種目だけを差し替えて」書きます。他端末が同じ日の別種目を足していても消しません。体組成は変更した項目だけを送ります。</p>
+</section>
+
+<section id="s8">
+  <h2>8. 同期設計（クラウドを壊さないための決まり）</h2>
+  <p>設計原則は<b>「クラウドの記録を絶対に壊さない」</b>です。テストで見つかった上書き事故の経路を、次の決まりで塞いでいます。</p>
+  <figure class="fig"><div class="scroll">
+  <svg viewBox="0 0 960 300" role="img" aria-label="保存先の状態遷移。起動すると未ログインなら端末内保存で動く。ログインすると切替中になり全入力を止め、クラウドの読み込み中は保存を拒否し、信頼できる最初のスナップショットが届くと同期中になって通常利用できる。エラー時は再接続を繰り返し、ログアウトで端末内保存に戻る。">
+    <defs><marker id="t8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" class="d-ah"/></marker></defs>
+    <rect x="10" y="40" width="170" height="84" rx="10" class="d-box"/><text x="95" y="70" text-anchor="middle" class="d-t">端末内保存</text><text x="95" y="90" text-anchor="middle" class="d-s">未ログイン</text><text x="95" y="108" text-anchor="middle" class="d-s">LocalAdapter</text>
+    <rect x="260" y="40" width="170" height="84" rx="10" class="d-amber"/><text x="345" y="70" text-anchor="middle" class="d-t">切替中</text><text x="345" y="90" text-anchor="middle" class="d-s">全画面の読み込み表示</text><text x="345" y="108" text-anchor="middle" class="d-s">入力・保存をすべて止める</text>
+    <rect x="510" y="40" width="190" height="84" rx="10" class="d-amber"/><text x="605" y="70" text-anchor="middle" class="d-t">クラウド読み込み中</text><text x="605" y="90" text-anchor="middle" class="d-s">画面は出るが保存は拒否</text><text x="605" y="108" text-anchor="middle" class="d-s">「読み込み中です」と通知</text>
+    <rect x="780" y="40" width="170" height="84" rx="10" class="d-green"/><text x="865" y="70" text-anchor="middle" class="d-t">同期中（通常）</text><text x="865" y="90" text-anchor="middle" class="d-s">読み書きできる</text><text x="865" y="108" text-anchor="middle" class="d-s">オフラインでも記録可</text>
+    <line x1="182" y1="70" x2="256" y2="70" class="d-ln" marker-end="url(#t8)"/><text x="219" y="60" text-anchor="middle" class="d-l">ログイン</text>
+    <line x1="432" y1="82" x2="506" y2="82" class="d-ln" marker-end="url(#t8)"/><text x="469" y="72" text-anchor="middle" class="d-l">切替完了</text>
+    <line x1="702" y1="82" x2="776" y2="82" class="d-ln" marker-end="url(#t8)"/><text x="739" y="72" text-anchor="middle" class="d-l">ready</text>
+    <rect x="510" y="196" width="190" height="84" rx="10" class="d-red"/><text x="605" y="226" text-anchor="middle" class="d-t">同期エラー</text><text x="605" y="246" text-anchor="middle" class="d-s">権限エラーなど</text><text x="605" y="264" text-anchor="middle" class="d-s">5秒→15秒→60秒で再接続</text>
+    <line x1="570" y1="126" x2="570" y2="192" class="d-ln" marker-end="url(#t8)"/><text x="560" y="164" text-anchor="end" class="d-l">購読に失敗</text>
+    <line x1="640" y1="194" x2="640" y2="128" class="d-ln" marker-end="url(#t8)"/><text x="650" y="164" class="d-l">再接続に成功</text>
+    <path d="M865 126V250H95V128" class="d-ln d-dash" marker-end="url(#t8)"/><text x="300" y="242" text-anchor="middle" class="d-l">ログアウト（切替中を経て端末内保存へ）</text>
+  </svg></div>
+  <figcaption><b>図2　保存先の状態遷移。</b>黄色の2つの状態では保存を受け付けません。「ready」は、信頼できる最初のスナップショット（下の表）が days・body・meta のそれぞれに届いた時です。</figcaption></figure>
+  <div class="tbl"><table>
+    <tr><th>決まり</th><th>内容</th><th>防いでいる事故</th></tr>
+    <tr><td>一覧は毎回作り直す</td><td>スナップショットが届くたび、差分ではなく全体からメモリ上の一覧を作り直す。直前と内容が同じなら再描画しない。</td><td>移行の一括書き込みや別タブの書き込みが一覧に入らず、その日に入力すると上書きになる。</td></tr>
+    <tr><td>ready まで保存しない</td><td>コレクションごとに ready フラグを持ち、未 ready の間は保存を拒否して通知する。</td><td>読み込みが遅い時に「空」を前提に保存し、クラウドの種目を消す。</td></tr>
+    <tr><td>信頼できるスナップショットだけを ready とみなす</td><td>サーバー由来は信頼。キャッシュ由来は、この端末がその uid で同期した実績（<code>won-synced</code>）があり、かつ前回は中身があったのに今回が空、という形でない時だけ信頼。</td><td>初回ログイン直後の「キャッシュ由来の空」を正として上書きする。</td></tr>
+    <tr><td>切替中は入力を止める</td><td>保存先の切替（ログイン・ログアウト・ユーザー切替）中は全画面の読み込み表示。完了時は入力中の下書きを捨てて現在の画面を作り直す。</td><td>端末内の内容を元にした下書きがクラウドへ書かれる。</td></tr>
+    <tr><td>遅れて届いた最初のスナップショットも必ず反映</td><td>読み込みのタイムアウト後に届いても通知し、画面ごと作り直す。</td><td>クラウドの記録が画面に出ないまま使い続ける。</td></tr>
+    <tr><td>自分の入力中は画面を作り直さない</td><td>セット入力中に他端末の変更が届いた場合、手元で未変更なら最新で作り直し（フォーカス復元）、変更済みなら手元を優先。他の画面は入力が終わってから反映。</td><td>入力中にフォーカスやキーボードが飛ぶ。</td></tr>
+    <tr><td>エラーからの自動復帰</td><td>購読エラー時は 5秒→15秒→60秒間隔で再購読。オンライン復帰・画面復帰・設定の「再接続」でも再試行。</td><td>ルール適用後もアプリを開き直すまで同期が戻らない。</td></tr>
+  </table></div>
+  <h3>端末内記録の移行</h3>
+  <ul>
+    <li>ログイン後、<b>サーバーに直接問い合わせて</b>クラウドの中身を確認してから判断します（オフラインなら次回に持ち越し）。</li>
+    <li>クラウドが空で端末内に記録あり → 確認のうえ全件アップロード。クラウドにも記録あり → <b>クラウドに無い日付だけ</b>追加（上書きしない）。実行直前にもう一度サーバーを確認します。</li>
+    <li>部位・種目はクラウド優先。ただし端末内にしか無いものは ID で追加します（移行した記録が「不明な種目」にならないように）。</li>
+    <li>書き込みは 500 件ごとの一括（writeBatch）。端末内の元データは消さずに残します。辞退しても、設定の「端末内の記録をクラウドへ追加」からやり直せます。</li>
+  </ul>
+</section>
+
+<section id="s9">
+  <h2>9. 認証設計</h2>
+  <ul>
+    <li>Google ログインは <code>signInWithPopup</code>。<code>signInWithRedirect</code> は、認証用ドメイン（firebaseapp.com）とアプリのドメイン（github.io）が別のため、Safari の制限で失敗するので使いません。</li>
+    <li>ポップアップはタップの直後に同期的に開きます（間に待ちを挟むとブロックされるため）。そのため SDK は起動時に先読みし、読み込み前に押された場合は「準備中」と知らせます。</li>
+    <li>処理中の連打は無視（120秒で自動解除）。キャンセル・ブロック・ネットワーク・未承認ドメインは日本語で出し分けます。</li>
+    <li>ログイン状態は SDK が端末に保持します。ログイン済みならオフラインでも起動できます。</li>
+    <li>ログインは任意です。全画面のログイン壁にはせず、ホームの案内カード（「あとで」で非表示）と設定画面から行います。</li>
+    <li>アクセス制御は Firestore のセキュリティルール（<code>request.auth.uid == uid</code>）で行います。<code>firebaseConfig</code> は公開前提の値です。</li>
+  </ul>
+  <div class="warn"><b>未確定事項：iPhone のホーム画面アプリでのログイン</b>iOS のバージョンによっては、ホーム画面アプリから開いたポップアップが呼び出し元に戻れず失敗する事例があります。実機で失敗した場合の代替案は、Google の OAuth で ID トークンをリダイレクトで受け取り <code>signInWithCredential</code> に渡す方式（ポップアップ不要。Google Cloud 側でリダイレクト先の登録が必要）です。</div>
+</section>
+
+<section id="s10">
+  <h2>10. PWA・オフライン設計</h2>
+  <div class="tbl"><table>
+    <tr><th>キャッシュ名</th><th>中身</th><th>方針</th></tr>
+    <tr><td class="mono">won-shell-&lt;版&gt;</td><td>アプリシェル（index.html、CSS、全 JS、アイコン、manifest）</td><td>インストール時に取得。応答はキャッシュを先に返し、裏で更新（stale-while-revalidate）。版が変わると古いものを削除。</td></tr>
+    <tr><td class="mono">won-sdk-&lt;SDK版&gt;</td><td>Firebase SDK の3ファイル（app / auth / firestore）</td><td>版が URL に入った不変ファイルなのでキャッシュ優先。取得に失敗しても Service Worker のインストールは成功させる。</td></tr>
+    <tr><td class="mono">won-fonts-…</td><td>Google Fonts</td><td>実行時にキャッシュ。取れなくても代替フォントで表示。</td></tr>
+  </table></div>
+  <ul>
+    <li>Firestore・ログイン関連の通信（firestore.googleapis.com、identitytoolkit、securetoken、apis.google.com、firebaseapp.com）には Service Worker は一切手を出しません。</li>
+    <li>登録は <code>localhost</code> か HTTPS の時だけ、1回だけ行います。</li>
+    <li><b>リリース時は <code>sw.js</code> の <code>CACHE_VERSION</code> と <code>defaults.js</code> の <code>APP_VERSION</code> を必ず上げます。</b>SDK の版を変える時は <code>firebase-config.js</code> と <code>sw.js</code> の両方（テストが一致を検査）。</li>
+    <li>SDK が読めない時（初回オフラインなど）もアプリは端末内保存で起動し、通知します。</li>
+    <li>iPhone のノッチ周りは <code>viewport-fit=cover</code> と <code>env(safe-area-inset-*)</code> で処理しています。</li>
+  </ul>
+</section>
+
+<section id="s11">
+  <h2>11. 操作の安全設計と入力ルール</h2>
+  <div class="tbl"><table>
+    <tr><th>項目</th><th>設計</th></tr>
+    <tr><td>自動保存</td><td>入力のたびに保存。保存ボタンなし。入力中は画面を作り直さず、該当箇所だけ更新する（フォーカスとキーボードを保つ）。</td></tr>
+    <tr><td>空セットの扱い</td><td>画面上は空の3セットを見せるが、保存するのは有効セットだけ。</td></tr>
+    <tr><td>数値の丸め</td><td>重量 0〜999.5kg（小数2桁まで）、回数 0〜999 の整数、体重 0〜999.9、体脂肪 0〜100。負数・非数は未入力扱い。</td></tr>
+    <tr><td>±ボタン</td><td>重量の刻みは設定値。空で＋なら「前セット→前回の1セット目→20kg」、回数は10から。</td></tr>
+    <tr><td>取り消しと確認</td><td>値のあるセットの削除は「元に戻す」付き通知（約5秒、直前の1件）。前回コピーは入力済みなら確認。種目記録の削除とログアウトは確認。</td></tr>
+    <tr><td>誤タップ防止</td><td>ボタン付き通知は消えた後も約0.6秒その場でタップを吸収（下のボタンへの抜け防止）。戻る操作の後0.45秒、画面遷移の後0.3秒はボタン操作を無視（ダブルタップで2画面戻る事故の防止）。</td></tr>
+    <tr><td>表示の安全</td><td>利用者が入力した文字列はすべてエスケープして表示。</td></tr>
+    <tr><td>壊れたデータ</td><td>読めない端末内データは退避してから通知。クラウド側の不正データは画面に出さないが、書き換えもしない。</td></tr>
+    <tr><td>タップ領域・文字</td><td>主要ボタンは高さ40px以上。入力欄は16px以上（iOS の自動ズーム防止）。セット入力行は 320px 幅でも1行。</td></tr>
+  </table></div>
+</section>
+
+<section id="s12">
+  <h2>12. 見た目の設計</h2>
+  <ul>
+    <li>基準は承認済みモック <code>mock/mock.html</code>。上段の赤い面にカレンダーと負荷量、下段に操作と記録という構成です。</li>
+    <li>色は <code>:root</code> のトークン（<code>--hero-bg</code>、<code>--accent</code>、<code>--ink</code> など）で管理し、黒テーマは <code>:root[data-skin="black"]</code> でトークンだけを差し替えます。部品側に色を直書きしません。</li>
+    <li>数字と英字は Oswald、本文は Noto Sans JP。数字は等幅数字（tabular-nums）。</li>
+    <li>ブレークポイント：〜359px／〜374px／〜413px（スマホの詰め方3段階）、960px〜（PC）。幅が小数になる端末があるため境界は <code>.98px</code> で指定しています。</li>
+  </ul>
+  <div class="note"><b>判断保留</b>赤テーマの一部（カレンダーの記録あり日 3.1:1 など）は、元にしたアプリの配色を踏襲しておりコントラストが低めです。実機での見え方を確認してから調整します。</div>
+</section>
+
+<section id="s13">
+  <h2>13. テスト設計</h2>
+  <div class="tbl"><table>
+    <tr><th>種類</th><th>内容</th></tr>
+    <tr><td>自動テスト</td><td><code>tests/test.html</code> をブラウザで開くと実行（v1.1.1 時点で 150 件、全 PASS）。対象は計算、日付、URL 解析、store の保存・削除・退避、Firestore を模した部品を使った同期（遅れて届くスナップショット、未 ready 時の保存拒否、切替中の保存不可、移行、再接続、ログイン連打など）、設定と Service Worker とルールの整合。</td></tr>
+    <tr><td>独立した手動テスト</td><td>開発とは別の担当が、スマホ幅（320〜430px）と PC 幅で実際に操作。既知のデータを入れて集計値を手計算と照合し、異常入力・戻る操作・両テーマ・誤タップを確認。指摘は修正後に再確認。</td></tr>
+    <tr><td>実機・実ログインでの確認（利用者）</td><td>開発側は Google にログインできないため、ログイン後の同期、移行、オフライン記録、iPhone のホーム画面アプリからのログイン、音、ノッチ周りは利用者が確認する（手順書 5章）。</td></tr>
+  </table></div>
+</section>
+
+<section id="s14">
+  <h2>14. 既知の制約と今後の候補</h2>
+  <ul>
+    <li>同期の単位は「1日＝1ドキュメント」。2台で同じ日を同時に編集すると、後から保存した方が残ります。</li>
+    <li>初めてログインした端末は、最初の読み込みが終わるまで（オンラインになるまで）入力できません。安全側の仕様です。</li>
+    <li>iPhone でアプリが裏に回った時や画面ロック中は、タイマーの音は鳴りません（復帰時に通知）。</li>
+    <li>「元に戻す」は直前の1件だけです。</li>
+    <li>更新の反映は「開いた次の起動から」です（Service Worker の方式上）。</li>
+    <li>今後の候補：自己ベストのバッジ、CSV／JSON 書き出し、ホーム画面アプリ向けの別ログイン方式、赤テーマのコントラスト調整、週別バーへの数値表示。</li>
+  </ul>
+  <h3>改版履歴</h3>
+  <div class="tbl"><table>
+    <tr><th>版</th><th>内容</th></tr>
+    <tr><td>v1.0.0</td><td>端末内保存版。全画面、PWA 化。</td></tr>
+    <tr><td>v1.0.1</td><td>テスト指摘16件（セット行の1行化、URL に日付、コピー確認、シートの戻る、データ退避、コントラストなど）。</td></tr>
+    <tr><td>v1.0.2</td><td>誤タップ・二重戻りの防止、320px 対応、退避データの整理など。</td></tr>
+    <tr><td>v1.1.0</td><td>Firebase 同期と Google ログイン、端末内記録の移行。</td></tr>
+    <tr><td>v1.1.1</td><td>同期の安全対策（一覧の作り直し、ready まで保存拒否、切替中の入力停止、種目の追加マージ、自動再接続）。GitHub Pages で公開。</td></tr>
+  </table></div>
+</section>
+
+<footer>WorkOut Note 設計書 ／ v1.1.1 時点の内容です。設計を変更した時は本書と改版履歴を更新してください。</footer>
+</div>

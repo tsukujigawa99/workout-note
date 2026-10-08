@@ -1,0 +1,399 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WorkOut Note 構成図</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#F4EFEE; --surface:#FFFFFF; --sunk:#FAF6F5; --ink:#2B2021; --ink-2:#6B5E5F; --line:#E0D6D5; --line-2:#B9ABAA;
+  --accent:#C9332F; --accent-weak:#FBE9E8; --blue:#2F6FAE; --blue-weak:#E6EFF8; --green:#2E8B62; --green-weak:#E3F3EB; --amber:#A9741A; --amber-weak:#FAF0DC;
+  --disp:"Oswald","Arial Narrow","Noto Sans JP",sans-serif; --body:"Noto Sans JP","Hiragino Sans","Yu Gothic UI","Meiryo",sans-serif; --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141112; --surface:#1E1A1B; --sunk:#262122; --ink:#F1EBEB; --ink-2:#A99C9C; --line:#352D2E; --line-2:#5A4E4F;
+  --accent:#EC5F5A; --accent-weak:#3A1C1C; --blue:#7FB2E6; --blue-weak:#1B2A3A; --green:#66C79A; --green-weak:#16302A; --amber:#E0B45C; --amber-weak:#33290F;
+}}
+:root[data-theme="dark"]{
+  --bg:#141112; --surface:#1E1A1B; --sunk:#262122; --ink:#F1EBEB; --ink-2:#A99C9C; --line:#352D2E; --line-2:#5A4E4F;
+  --accent:#EC5F5A; --accent-weak:#3A1C1C; --blue:#7FB2E6; --blue-weak:#1B2A3A; --green:#66C79A; --green-weak:#16302A; --amber:#E0B45C; --amber-weak:#33290F;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.8}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:20px;padding-block:28px 64px;display:flex;flex-direction:column;gap:28px}
+header.doc{border-bottom:3px solid var(--accent);padding-bottom:16px;display:flex;flex-direction:column;gap:6px}
+.kicker{font-family:var(--disp);letter-spacing:.14em;color:var(--accent);font-size:14px}
+h1{margin:0;font-size:clamp(24px,4.4vw,34px);line-height:1.3;text-wrap:balance}
+.meta{color:var(--ink-2);font-size:13px;display:flex;flex-wrap:wrap;gap:4px 18px}
+.lead{max-width:46em;margin:0}
+nav.toc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 18px}
+nav.toc b{font-size:13px;color:var(--ink-2);letter-spacing:.08em}
+nav.toc ol{margin:6px 0 0;padding-left:1.4em;columns:2;column-gap:32px;font-size:14px}
+@media (max-width:640px){nav.toc ol{columns:1}}
+a{color:var(--accent)}
+section{display:flex;flex-direction:column;gap:14px}
+h2{margin:0;font-size:21px;line-height:1.4;padding-left:12px;border-left:5px solid var(--accent);text-wrap:balance}
+h3{margin:6px 0 0;font-size:16px}
+p{margin:0;max-width:48em}
+ul,ol{margin:0;padding-left:1.5em;max-width:48em}
+li{margin:2px 0}
+code{font-family:var(--mono);font-size:.9em;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+pre{margin:0;background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.6}
+pre code{background:none;border:0;padding:0}
+figure.fig{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 14px 12px}
+.scroll{overflow-x:auto}
+figure.fig svg{display:block;width:100%;height:auto;min-width:780px;font-family:var(--body)}
+figcaption{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:13.5px;color:var(--ink-2);max-width:none}
+figcaption b{color:var(--ink)}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:640px}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--sunk);font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td:first-child{font-weight:700;white-space:nowrap}
+.note,.warn{border-radius:10px;padding:12px 14px;font-size:14px;border:1px solid var(--line);background:var(--surface);border-left:5px solid var(--blue)}
+.warn{border-left-color:var(--amber)}
+.note b,.warn b{display:block;font-size:13px;letter-spacing:.04em}
+.keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.key{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:14px}
+.key b{display:block;font-size:15px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--ink-2)}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:3px;border:1.5px solid;vertical-align:-2px;margin-right:5px}
+.lg-red{background:var(--accent-weak);border-color:var(--accent)!important}.lg-blue{background:var(--blue-weak);border-color:var(--blue)!important}
+.lg-amber{background:var(--amber-weak);border-color:var(--amber)!important}.lg-plain{background:var(--surface);border-color:var(--line-2)!important}.lg-green{background:var(--green-weak);border-color:var(--green)!important}
+footer{color:var(--ink-2);font-size:12.5px;border-top:1px solid var(--line);padding-top:14px}
+/* diagram marks */
+.d-zone{fill:var(--sunk);stroke:var(--line-2);stroke-width:1.2;stroke-dasharray:6 4}
+.d-box{fill:var(--surface);stroke:var(--line-2);stroke-width:1.5}
+.d-red{fill:var(--accent-weak);stroke:var(--accent);stroke-width:1.5}
+.d-blue{fill:var(--blue-weak);stroke:var(--blue);stroke-width:1.5}
+.d-green{fill:var(--green-weak);stroke:var(--green);stroke-width:1.5}
+.d-amber{fill:var(--amber-weak);stroke:var(--amber);stroke-width:1.5}
+.d-t{fill:var(--ink);font-size:13.5px;font-weight:700}
+.d-s{fill:var(--ink-2);font-size:11.5px}
+.d-l{fill:var(--ink);font-size:12px;font-weight:500}
+.d-z{fill:var(--ink-2);font-size:12.5px;font-weight:700;letter-spacing:.06em}
+.d-m{font-family:var(--mono);font-size:10.5px;fill:var(--ink-2)}
+.d-ln{stroke:var(--ink-2);stroke-width:1.6;fill:none}
+.d-dash{stroke-dasharray:5 4}
+.d-ah{fill:var(--ink-2)}
+.d-ok{stroke:var(--green)}.d-ok-t{fill:var(--green);font-size:12.5px;font-weight:700}.d-ah-ok{fill:var(--green)}
+.d-ng{stroke:var(--accent)}.d-ng-t{fill:var(--accent);font-size:12.5px;font-weight:700}
+.d-ico{fill:none;stroke:var(--ink);stroke-width:1.6}
+.d-num{fill:var(--accent)}.d-num-t{fill:#fff;font-family:var(--disp);font-size:13px;text-anchor:middle}
+@media print{body{background:#fff}.wrap{padding-block:0}figure.fig,nav.toc{break-inside:avoid}}
+</style>
+
+<div class="wrap">
+<header class="doc">
+  <div class="kicker">WORKOUT NOTE / SYSTEM OVERVIEW</div>
+  <h1>WorkOut Note 構成図</h1>
+  <div class="meta"><span>対象バージョン：v1.1.1</span><span>作成日：2026-09-17</span><span>関連：手順書・設計書（同フォルダ）</span></div>
+  <p class="lead">個人用の筋トレ記録アプリ「WorkOut Note」が、<b>どんな部品でできていて、記録がどこを通ってどこに保存されるのか</b>を図で説明します。専門用語は初めて出てくる所で言い換えています。</p>
+</header>
+
+<nav class="toc" aria-label="目次"><b>目次</b>
+<ol>
+  <li><a href="#s1">ひとことで言うと</a></li>
+  <li><a href="#s2">全体構成図（登場人物と役割）</a></li>
+  <li><a href="#s3">構成要素の一覧</a></li>
+  <li><a href="#s4">記録が同期される流れ</a></li>
+  <li><a href="#s5">ログインの流れ</a></li>
+  <li><a href="#s6">アプリ内部の構成（プログラムの層）</a></li>
+  <li><a href="#s7">データの形（保管庫の中身）</a></li>
+  <li><a href="#s8">セキュリティ（誰が読めるか）</a></li>
+  <li><a href="#s9">修正が公開されるまでの流れ</a></li>
+  <li><a href="#s10">用語集</a></li>
+</ol></nav>
+
+<section id="s1">
+  <h2>1. ひとことで言うと</h2>
+  <div class="keys">
+    <div class="key"><b>アプリ本体は「Webページ」</b>App Store は使いません。GitHub Pages という無料の置き場からアプリを読み込み、iPhone ではホーム画面に追加してアプリのように使います（この方式を PWA と呼びます）。</div>
+    <div class="key"><b>記録は「クラウドの保管庫」へ</b>Google の Firebase（Firestore）に保存します。iPhone で入れた記録が PC にもすぐ出ます。</div>
+    <div class="key"><b>電波がなくても記録できる</b>端末の中に「控え」を持ち、つながった時に自動で送ります。ジムの電波が弱くても大丈夫です。</div>
+    <div class="key"><b>費用は 0 円・広告なし</b>使っているサービスはすべて無料枠の範囲内です。見られるのはログインした本人だけです。</div>
+  </div>
+</section>
+
+<section id="s2">
+  <h2>2. 全体構成図（登場人物と役割）</h2>
+  <p>左が手元の端末、右がインターネット上のサービスです。端末とサービスの間のやり取りは ①②③ の3種類だけです。</p>
+  <figure class="fig"><div class="scroll">
+  <svg viewBox="0 0 960 540" role="img" aria-label="全体構成図。iPhoneとPCが、GitHub Pagesからアプリを読み込み、Firebase AuthenticationでGoogleログインし、Cloud Firestoreと記録を双方向に同期する。">
+    <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="d-ah"/></marker></defs>
+    <rect x="20" y="40" width="290" height="480" rx="14" class="d-zone"/>
+    <text x="36" y="66" class="d-z">あなたの端末</text>
+    <circle cx="238" cy="78" r="9" class="d-ico"/><path d="M222 108q16 -24 32 0" class="d-ico"/>
+    <text x="262" y="92" class="d-s">あなた</text>
+
+    <rect x="46" y="130" width="238" height="165" rx="12" class="d-red"/>
+    <rect x="62" y="148" width="34" height="60" rx="7" class="d-ico"/><line x1="73" y1="154" x2="85" y2="154" class="d-ico"/>
+    <text x="110" y="164" class="d-t">iPhone</text>
+    <text x="110" y="183" class="d-s">ホーム画面に追加したアプリ</text>
+    <text x="110" y="200" class="d-s">（PWA：Safariの仕組みで動く）</text>
+    <rect x="62" y="226" width="206" height="54" rx="8" class="d-box"/>
+    <text x="165" y="248" text-anchor="middle" class="d-l">端末内の控え</text>
+    <text x="165" y="266" text-anchor="middle" class="d-s">アプリのファイル＋記録のコピー</text>
+
+    <rect x="46" y="325" width="238" height="165" rx="12" class="d-red"/>
+    <rect x="62" y="345" width="40" height="28" rx="3" class="d-ico"/><line x1="82" y1="373" x2="82" y2="382" class="d-ico"/><line x1="70" y1="383" x2="94" y2="383" class="d-ico"/>
+    <text x="116" y="359" class="d-t">PC</text>
+    <text x="116" y="378" class="d-s">ブラウザ（Chrome / Edge）</text>
+    <text x="116" y="395" class="d-s">同じURLを開くだけ</text>
+    <rect x="62" y="421" width="206" height="54" rx="8" class="d-box"/>
+    <text x="165" y="443" text-anchor="middle" class="d-l">端末内の控え</text>
+    <text x="165" y="461" text-anchor="middle" class="d-s">アプリのファイル＋記録のコピー</text>
+
+    <rect x="610" y="40" width="330" height="480" rx="14" class="d-zone"/>
+    <text x="626" y="66" class="d-z">インターネット上のサービス（すべて無料枠）</text>
+
+    <rect x="630" y="84" width="290" height="112" rx="12" class="d-amber"/>
+    <text x="646" y="110" class="d-t">GitHub Pages</text>
+    <text x="646" y="130" class="d-s">アプリ本体（画面・プログラム）の置き場</text>
+    <text x="646" y="148" class="d-s">暗号化された通信（HTTPS）で配る</text>
+    <text x="646" y="176" class="d-m">tsukujigawa99.github.io/workout-note/</text>
+
+    <rect x="630" y="222" width="290" height="112" rx="12" class="d-blue"/>
+    <text x="646" y="248" class="d-t">Firebase Authentication</text>
+    <text x="646" y="268" class="d-s">本人確認の係（Googleアカウントでログイン）</text>
+    <text x="646" y="286" class="d-s">パスワードは Google が管理し、</text>
+    <text x="646" y="303" class="d-s">アプリは一切受け取らない</text>
+
+    <rect x="630" y="360" width="290" height="136" rx="12" class="d-blue"/>
+    <path d="M868 386a16 6 0 1 0 32 0a16 6 0 1 0 -32 0v26a16 6 0 0 0 32 0v-26" class="d-ico"/>
+    <text x="646" y="386" class="d-t">Cloud Firestore</text>
+    <text x="646" y="406" class="d-s">トレーニング記録の保管庫</text>
+    <text x="646" y="424" class="d-s">（データセンターは東京）</text>
+    <text x="646" y="448" class="d-s">本人の記録は本人しか読み書きできない</text>
+    <text x="646" y="466" class="d-s">変更があると他の端末へすぐ知らせる</text>
+
+    <line x1="628" y1="140" x2="314" y2="140" class="d-ln" marker-end="url(#a1)"/>
+    <circle cx="344" cy="116" r="11" class="d-num"/><text x="344" y="121" class="d-num-t">1</text>
+    <text x="362" y="121" class="d-l">アプリを読み込む</text>
+    <text x="332" y="160" class="d-s">初回と更新時だけ。以後は「端末内の控え」から起動</text>
+
+    <line x1="314" y1="278" x2="628" y2="278" class="d-ln" marker-end="url(#a1)"/>
+    <circle cx="344" cy="254" r="11" class="d-num"/><text x="344" y="259" class="d-num-t">2</text>
+    <text x="362" y="259" class="d-l">Google でログイン</text>
+    <text x="332" y="298" class="d-s">一度ログインすれば、端末が覚えている</text>
+
+    <line x1="314" y1="428" x2="628" y2="428" class="d-ln" marker-start="url(#a1)" marker-end="url(#a1)"/>
+    <circle cx="344" cy="404" r="11" class="d-num"/><text x="344" y="409" class="d-num-t">3</text>
+    <text x="362" y="409" class="d-l">記録を保存・同期（双方向）</text>
+    <text x="332" y="448" class="d-s">電波がない間の記録は、つながった時に自動で送る</text>
+  </svg></div>
+  <figcaption><b>図1　全体構成。</b>端末は ①アプリ本体を GitHub Pages から受け取り、②Firebase Authentication で本人確認をし、③Cloud Firestore と記録をやり取りします。自前のサーバーは1台もありません。
+    <div class="legend" style="margin-top:6px"><span><i class="lg-red"></i>あなたの端末</span><span><i class="lg-amber"></i>アプリの配布（GitHub）</span><span><i class="lg-blue"></i>ログインとデータ（Google Firebase）</span></div>
+  </figcaption></figure>
+</section>
+
+<section id="s3">
+  <h2>3. 構成要素の一覧</h2>
+  <div class="tbl"><table>
+    <tr><th>要素</th><th>たとえると</th><th>役割</th><th>提供元・費用</th></tr>
+    <tr><td>WorkOut Note（PWA）</td><td>アプリそのもの</td><td>カレンダー、セット入力、集計、グラフ、タイマーなど全画面。HTML / CSS / JavaScript だけで作られ、端末のブラウザの中で動く。</td><td>自作・0円</td></tr>
+    <tr><td>GitHub Pages</td><td>アプリの配布棚</td><td>アプリのファイル一式を公開URLで配る。記録データは置かない。</td><td>GitHub・無料</td></tr>
+    <tr><td>GitHub リポジトリ / Actions</td><td>原本の保管庫と自動配送係</td><td>プログラムの原本と変更履歴を保管。変更を受け取ると自動で GitHub Pages に反映する。</td><td>GitHub・無料</td></tr>
+    <tr><td>Firebase Authentication</td><td>受付の本人確認</td><td>Google アカウントでログインさせ、利用者ごとの ID（uid）を発行する。</td><td>Google・無料枠</td></tr>
+    <tr><td>Cloud Firestore</td><td>記録の金庫</td><td>日々の記録・体組成・種目一覧・設定を保存。変更を他の端末へ即時に通知。オフライン用の控えも管理。</td><td>Google・無料枠（1日あたり読み取り5万回・書き込み2万回まで。個人利用では十分）</td></tr>
+    <tr><td>Service Worker</td><td>端末内の倉庫番</td><td>アプリのファイルを端末に控えておき、電波がなくても起動できるようにする。</td><td>ブラウザの標準機能</td></tr>
+    <tr><td>端末内の保存領域</td><td>手元のメモ帳</td><td>未ログイン時の記録（localStorage）、ログイン中の控えと送信待ち（IndexedDB）、テーマの選択。</td><td>ブラウザの標準機能</td></tr>
+  </table></div>
+</section>
+
+<section id="s4">
+  <h2>4. 記録が同期される流れ</h2>
+  <p>入力した瞬間にまず端末の中へ保存するので、画面はすぐ反応します。クラウドへの送信はその後ろで自動的に行われます。</p>
+  <figure class="fig"><div class="scroll">
+  <svg viewBox="0 0 960 450" role="img" aria-label="同期の流れ。iPhoneで入力すると端末内に即保存され、Firestoreへ送信、Firestoreが保存して確定を返し、開いているPCへ変更を通知してPCの画面が更新される。電波がない時は送信待ちとして保持し、復帰時に送信する。">
+    <defs><marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" class="d-ah"/></marker></defs>
+    <rect x="50" y="16" width="220" height="44" rx="10" class="d-red"/><text x="160" y="43" text-anchor="middle" class="d-t">iPhone（ジムで入力）</text>
+    <rect x="370" y="16" width="220" height="44" rx="10" class="d-blue"/><text x="480" y="43" text-anchor="middle" class="d-t">Cloud Firestore</text>
+    <rect x="690" y="16" width="220" height="44" rx="10" class="d-red"/><text x="800" y="43" text-anchor="middle" class="d-t">PC（家で確認）</text>
+    <line x1="160" y1="60" x2="160" y2="372" class="d-ln d-dash"/><line x1="480" y1="60" x2="480" y2="430" class="d-ln d-dash"/><line x1="800" y1="60" x2="800" y2="430" class="d-ln d-dash"/>
+
+    <rect x="40" y="82" width="240" height="36" rx="8" class="d-box"/><text x="160" y="105" text-anchor="middle" class="d-l">1　重量・回数を入力</text>
+    <rect x="40" y="132" width="240" height="52" rx="8" class="d-box"/><text x="160" y="154" text-anchor="middle" class="d-l">2　端末内に即保存</text><text x="160" y="172" text-anchor="middle" class="d-s">画面・集計にすぐ反映</text>
+
+    <line x1="160" y1="222" x2="476" y2="222" class="d-ln" marker-end="url(#a4)"/><text x="318" y="214" text-anchor="middle" class="d-l">3　送信（電波がある時）</text>
+    <rect x="380" y="236" width="200" height="36" rx="8" class="d-box"/><text x="480" y="259" text-anchor="middle" class="d-l">4　保存して確定</text>
+    <line x1="480" y1="300" x2="164" y2="300" class="d-ln d-dash" marker-end="url(#a4)"/><text x="322" y="292" text-anchor="middle" class="d-s">確定の知らせ（「送信待ち」表示が消える）</text>
+    <line x1="480" y1="334" x2="796" y2="334" class="d-ln" marker-end="url(#a4)"/><text x="640" y="326" text-anchor="middle" class="d-l">5　変更を通知</text>
+    <rect x="690" y="348" width="220" height="52" rx="8" class="d-box"/><text x="800" y="370" text-anchor="middle" class="d-l">6　画面を自動で更新</text><text x="800" y="388" text-anchor="middle" class="d-s">開いていなければ次回起動時に反映</text>
+
+    <rect x="20" y="384" width="330" height="52" rx="8" class="d-amber"/><text x="185" y="406" text-anchor="middle" class="d-l">電波がない時</text><text x="185" y="424" text-anchor="middle" class="d-s">「送信待ち」で端末内に保持 → つながったら 3 へ</text>
+  </svg></div>
+  <figcaption><b>図2　同期の流れ。</b>実線は記録そのものの移動、破線は「保存できました」の返事です。1日分の記録を1つのまとまりとして送るため、2台で同じ日を同時に編集した場合は後から保存した方が残ります（一人で使う前提の割り切り）。</figcaption></figure>
+</section>
+
+<section id="s5">
+  <h2>5. ログインの流れ</h2>
+  <figure class="fig"><div class="scroll">
+  <svg viewBox="0 0 960 190" role="img" aria-label="ログインの流れ。ログインを押す、Googleの画面でアカウントを選ぶ、Firebaseが本人確認して利用者IDを発行、保存先を端末内からクラウドへ切替、端末内に記録があれば移行を確認、の5段階。">
+    <defs><marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" class="d-ah"/></marker></defs>
+    <g>
+      <rect x="5" y="40" width="150" height="110" rx="10" class="d-red"/><rect x="205" y="40" width="150" height="110" rx="10" class="d-blue"/><rect x="405" y="40" width="150" height="110" rx="10" class="d-blue"/><rect x="605" y="40" width="150" height="110" rx="10" class="d-red"/><rect x="805" y="40" width="150" height="110" rx="10" class="d-red"/>
+      <line x1="157" y1="95" x2="202" y2="95" class="d-ln" marker-end="url(#a5)"/><line x1="357" y1="95" x2="402" y2="95" class="d-ln" marker-end="url(#a5)"/><line x1="557" y1="95" x2="602" y2="95" class="d-ln" marker-end="url(#a5)"/><line x1="757" y1="95" x2="802" y2="95" class="d-ln" marker-end="url(#a5)"/>
+      <circle cx="80" cy="40" r="12" class="d-num"/><text x="80" y="45" class="d-num-t">1</text><circle cx="280" cy="40" r="12" class="d-num"/><text x="280" y="45" class="d-num-t">2</text><circle cx="480" cy="40" r="12" class="d-num"/><text x="480" y="45" class="d-num-t">3</text><circle cx="680" cy="40" r="12" class="d-num"/><text x="680" y="45" class="d-num-t">4</text><circle cx="880" cy="40" r="12" class="d-num"/><text x="880" y="45" class="d-num-t">5</text>
+      <text x="80" y="84" text-anchor="middle" class="d-t">ログインを押す</text><text x="80" y="106" text-anchor="middle" class="d-s">ホームの案内カード</text><text x="80" y="123" text-anchor="middle" class="d-s">または設定画面</text>
+      <text x="280" y="84" text-anchor="middle" class="d-t">Google の画面</text><text x="280" y="106" text-anchor="middle" class="d-s">別ウィンドウが開く</text><text x="280" y="123" text-anchor="middle" class="d-s">アカウントを選ぶ</text>
+      <text x="480" y="84" text-anchor="middle" class="d-t">本人確認</text><text x="480" y="106" text-anchor="middle" class="d-s">Firebase が利用者ID</text><text x="480" y="123" text-anchor="middle" class="d-s">（uid）を発行</text>
+      <text x="680" y="84" text-anchor="middle" class="d-t">保存先を切替</text><text x="680" y="106" text-anchor="middle" class="d-s">端末内 → クラウド</text><text x="680" y="123" text-anchor="middle" class="d-s">数秒だけ入力を止める</text>
+      <text x="880" y="84" text-anchor="middle" class="d-t">移行の確認</text><text x="880" y="106" text-anchor="middle" class="d-s">端末内に記録があれば</text><text x="880" y="123" text-anchor="middle" class="d-s">クラウドへ足すか聞く</text>
+    </g>
+    <text x="5" y="178" class="d-s">赤＝アプリ内の処理　青＝Google / Firebase 側の処理</text>
+  </svg></div>
+  <figcaption><b>図3　ログインの流れ。</b>④で入力を止めるのは、切り替えの途中で「端末内の古い内容」をクラウドに書いてしまう事故を防ぐためです。ログインしなくてもアプリは使えますが、その場合の記録はその端末の中だけに保存されます。</figcaption></figure>
+</section>
+
+<section id="s6">
+  <h2>6. アプリ内部の構成（プログラムの層）</h2>
+  <p>プログラムは上から「画面」→「司令塔」→「保存の窓口」→「保存先」の順に積み重なっています。画面は保存先がどこかを知らず、窓口（<code>store.js</code>）に頼むだけです。だから保存先を端末内とクラウドで入れ替えても、画面側は変える必要がありません。</p>
+  <figure class="fig"><div class="scroll">
+  <svg viewBox="0 0 960 640" role="img" aria-label="アプリ内部の層構造。画面群がmain.jsに操作を渡し、main.jsがstore.jsを通じて読み書きする。store.jsは未ログイン時はLocalAdapterでlocalStorageへ、ログイン中はFirebaseAdapterでFirebase SDKとその端末内キャッシュを経由してCloud Firestoreへ保存する。cloud.jsがログイン状態を見て保存先を切り替える。sw.jsはアプリのファイルを端末に控える。">
+    <defs><marker id="a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="d-ah"/></marker></defs>
+    <rect x="16" y="50" width="156" height="570" rx="12" class="d-amber"/>
+    <text x="30" y="78" class="d-t">sw.js</text><text x="30" y="97" class="d-s">Service Worker</text>
+    <text x="30" y="130" class="d-s">アプリのファイルを</text><text x="30" y="148" class="d-s">端末に控えておき、</text><text x="30" y="166" class="d-s">電波がなくても</text><text x="30" y="184" class="d-s">起動できるようにする</text>
+    <text x="30" y="220" class="d-s">Firebase の部品</text><text x="30" y="238" class="d-s">（SDK）も控える</text>
+    <text x="30" y="274" class="d-s">記録データや</text><text x="30" y="292" class="d-s">ログインの通信には</text><text x="30" y="310" class="d-s">手を出さない</text>
+
+    <text x="200" y="40" class="d-z">画面の層</text>
+    <rect x="200" y="50" width="744" height="92" rx="12" class="d-red"/>
+    <text x="214" y="74" class="d-t">screens/ — 9つの画面</text>
+    <g>
+      <rect x="213" y="88" width="74" height="40" rx="7" class="d-box"/><rect x="293" y="88" width="74" height="40" rx="7" class="d-box"/><rect x="373" y="88" width="74" height="40" rx="7" class="d-box"/><rect x="453" y="88" width="74" height="40" rx="7" class="d-box"/><rect x="533" y="88" width="74" height="40" rx="7" class="d-box"/><rect x="613" y="88" width="74" height="40" rx="7" class="d-box"/><rect x="693" y="88" width="74" height="40" rx="7" class="d-box"/><rect x="773" y="88" width="74" height="40" rx="7" class="d-box"/><rect x="853" y="88" width="78" height="40" rx="7" class="d-box"/>
+      <text x="250" y="105" text-anchor="middle" class="d-l">ホーム</text><text x="250" y="121" text-anchor="middle" class="d-m">home</text>
+      <text x="330" y="105" text-anchor="middle" class="d-l">種目選択</text><text x="330" y="121" text-anchor="middle" class="d-m">pick</text>
+      <text x="410" y="105" text-anchor="middle" class="d-l">セット入力</text><text x="410" y="121" text-anchor="middle" class="d-m">entry</text>
+      <text x="490" y="105" text-anchor="middle" class="d-l">種目履歴</text><text x="490" y="121" text-anchor="middle" class="d-m">history</text>
+      <text x="570" y="105" text-anchor="middle" class="d-l">履歴/分析</text><text x="570" y="121" text-anchor="middle" class="d-m">analysis</text>
+      <text x="650" y="105" text-anchor="middle" class="d-l">体組成</text><text x="650" y="121" text-anchor="middle" class="d-m">body</text>
+      <text x="730" y="105" text-anchor="middle" class="d-l">設定</text><text x="730" y="121" text-anchor="middle" class="d-m">settings</text>
+      <text x="810" y="105" text-anchor="middle" class="d-l">種目管理</text><text x="810" y="121" text-anchor="middle" class="d-m">master</text>
+      <text x="892" y="105" text-anchor="middle" class="d-l">確認シート</text><text x="892" y="121" text-anchor="middle" class="d-m">sheets</text>
+    </g>
+    <line x1="325" y1="144" x2="325" y2="186" class="d-ln" marker-start="url(#a6)" marker-end="url(#a6)"/><text x="336" y="170" class="d-l">タップ・入力を渡す ／ 描画を受け取る</text>
+
+    <text x="200" y="182" class="d-z" style="display:none">制御の層</text>
+    <rect x="200" y="190" width="250" height="84" rx="10" class="d-box"/><text x="214" y="216" class="d-t">main.js — 司令塔</text><text x="214" y="236" class="d-s">URLの切替・操作の受付・描画の指示</text><text x="214" y="254" class="d-s">二度押しや誤タップのガードもここ</text>
+    <rect x="460" y="190" width="112" height="84" rx="10" class="d-box"/><text x="472" y="216" class="d-t">state.js</text><text x="472" y="236" class="d-s">選択中の日付</text><text x="472" y="254" class="d-s">などの状態</text>
+    <rect x="582" y="190" width="112" height="84" rx="10" class="d-box"/><text x="594" y="216" class="d-t">ui.js</text><text x="594" y="236" class="d-s">共通部品</text><text x="594" y="254" class="d-s">グラフ・通知</text>
+    <rect x="704" y="190" width="112" height="84" rx="10" class="d-box"/><text x="716" y="216" class="d-t">timer.js</text><text x="716" y="236" class="d-s">インターバル</text><text x="716" y="254" class="d-s">タイマー・音</text>
+    <rect x="826" y="190" width="118" height="84" rx="10" class="d-box"/><text x="838" y="216" class="d-t">calc.js</text><text x="838" y="236" class="d-s">計算だけの部品</text><text x="838" y="254" class="d-s">1RM・負荷量集計</text>
+
+    <line x1="325" y1="276" x2="325" y2="318" class="d-ln" marker-start="url(#a6)" marker-end="url(#a6)"/><text x="336" y="302" class="d-l">読む ／ 保存する</text>
+    <rect x="200" y="322" width="470" height="76" rx="10" class="d-green"/><text x="214" y="348" class="d-t">store.js — 保存の窓口</text><text x="214" y="368" class="d-s">画面はここにだけ頼む。保存先が端末内でもクラウドでも同じ頼み方で読み書きできる</text><text x="214" y="386" class="d-s">クラウドの記録を読み終わるまでは保存を受け付けない（上書き事故の防止）</text>
+    <rect x="694" y="322" width="250" height="76" rx="10" class="d-box"/><text x="708" y="348" class="d-t">cloud.js — 保存先の切替役</text><text x="708" y="368" class="d-s">ログイン状態を見て窓口に指示</text><text x="708" y="386" class="d-s">auth.js（ログイン）/ migrate.js（移行）</text>
+    <line x1="692" y1="360" x2="674" y2="360" class="d-ln" marker-end="url(#a6)"/>
+
+    <line x1="312" y1="400" x2="312" y2="446" class="d-ln" marker-end="url(#a6)"/><line x1="557" y1="400" x2="557" y2="446" class="d-ln" marker-end="url(#a6)"/>
+    <text x="434" y="428" text-anchor="middle" class="d-l">どちらか一方を使う</text>
+    <rect x="200" y="450" width="225" height="66" rx="10" class="d-box"/><text x="214" y="476" class="d-t">LocalAdapter</text><text x="214" y="496" class="d-s">ログインしていない時の保存係</text>
+    <rect x="445" y="450" width="225" height="66" rx="10" class="d-blue"/><text x="459" y="476" class="d-t">FirebaseAdapter</text><text x="459" y="496" class="d-s">ログイン中の保存係</text>
+
+    <line x1="312" y1="518" x2="312" y2="546" class="d-ln" marker-end="url(#a6)"/><line x1="557" y1="518" x2="557" y2="546" class="d-ln" marker-end="url(#a6)"/>
+    <rect x="200" y="550" width="225" height="70" rx="10" class="d-box"/><text x="214" y="576" class="d-t">localStorage</text><text x="214" y="596" class="d-s">この端末のブラウザの中だけ</text>
+    <rect x="445" y="550" width="225" height="70" rx="10" class="d-blue"/><text x="459" y="576" class="d-t">Firebase SDK ＋ 端末内の控え</text><text x="459" y="596" class="d-s">IndexedDB（送信待ちもここに貯まる）</text>
+    <line x1="672" y1="585" x2="716" y2="585" class="d-ln" marker-start="url(#a6)" marker-end="url(#a6)"/><text x="694" y="574" text-anchor="middle" class="d-l">同期</text>
+    <rect x="720" y="550" width="224" height="70" rx="10" class="d-blue"/><text x="734" y="576" class="d-t">Cloud Firestore</text><text x="734" y="596" class="d-s">クラウドの保管庫（インターネット上）</text>
+  </svg></div>
+  <figcaption><b>図4　アプリ内部の層。</b>緑の <code>store.js</code> が要です。上の層（画面）と下の層（保存先）を切り離しているので、保存先の追加や入れ替えが画面に影響しません。黄色の <code>sw.js</code> は別系統で、アプリのファイルだけを控えます。
+    <div class="legend" style="margin-top:6px"><span><i class="lg-red"></i>画面</span><span><i class="lg-plain"></i>アプリ内の部品</span><span><i class="lg-green"></i>保存の窓口</span><span><i class="lg-blue"></i>Firebase 関連</span><span><i class="lg-amber"></i>オフライン起動の仕組み</span></div>
+  </figcaption></figure>
+</section>
+
+<section id="s7">
+  <h2>7. データの形（保管庫の中身）</h2>
+  <p>Firestore の中は「フォルダと書類」のような入れ子になっています。いちばん外側が利用者ごとの箱（<code>users/{uid}</code>）で、その中に4種類の書類が入ります。</p>
+  <figure class="fig"><div class="scroll">
+  <svg viewBox="0 0 960 420" role="img" aria-label="データ構造。usersの下に利用者IDごとの箱があり、その中に日付ごとのdays、日付ごとのbody、meta/master、meta/settingsの4種類のドキュメントがある。">
+    <rect x="16" y="180" width="110" height="56" rx="10" class="d-box"/><text x="71" y="213" text-anchor="middle" class="d-t">users</text>
+    <line x1="126" y1="208" x2="160" y2="208" class="d-ln"/>
+    <rect x="160" y="172" width="190" height="72" rx="10" class="d-green"/><text x="255" y="200" text-anchor="middle" class="d-t">{uid}</text><text x="255" y="222" text-anchor="middle" class="d-s">ログインした本人専用の箱</text>
+    <path d="M350 208H380V64H410M380 208V160H410M380 208V262H410M380 262V356H410" class="d-ln"/>
+
+    <rect x="410" y="14" width="534" height="104" rx="10" class="d-blue"/>
+    <text x="424" y="38" class="d-t">days / 2026-09-17　— その日のトレーニング（1日＝1件）</text>
+    <text x="424" y="60" class="d-m">memo: "その日のメモ"</text>
+    <text x="424" y="78" class="d-m">items: [ { ex: 種目ID, sets: [ … ] } ]　　updatedAt: 更新時刻</text>
+    <text x="424" y="100" class="d-m">sets の1件: { w: 重量kg, r: 回数, memo: "一言", assist: 補助の有無 }</text>
+
+    <rect x="410" y="128" width="534" height="66" rx="10" class="d-blue"/>
+    <text x="424" y="152" class="d-t">body / 2026-09-17　— その日の体組成</text>
+    <text x="424" y="176" class="d-m">w: 体重kg　　f: 体脂肪率%　　updatedAt</text>
+
+    <rect x="410" y="220" width="534" height="86" rx="10" class="d-blue"/>
+    <text x="424" y="244" class="d-t">meta / master　— 部位と種目の一覧（並び順＝表示順）</text>
+    <text x="424" y="266" class="d-m">parts:     [ { id, name: "胸", color, hidden: 非表示か } ]</text>
+    <text x="424" y="286" class="d-m">exercises: [ { id, part: 部位ID, name: "ベンチプレス", hidden } ]</text>
+
+    <rect x="410" y="324" width="534" height="66" rx="10" class="d-blue"/>
+    <text x="424" y="348" class="d-t">meta / settings　— 設定</text>
+    <text x="424" y="372" class="d-m">step: 重量の±刻み(kg)　　timerSec: タイマー初期値(秒)</text>
+  </svg></div>
+  <figcaption><b>図5　データ構造。</b>種目は名前ではなく変わらない ID で記録するので、種目名を後から変えても過去の記録がつながったままです。種目の「削除」は実際には非表示（<code>hidden</code>）にするだけで、過去の記録は消えません。未ログイン時の端末内保存（localStorage）も同じ形です。</figcaption></figure>
+</section>
+
+<section id="s8">
+  <h2>8. セキュリティ（誰が読めるか）</h2>
+  <figure class="fig"><div class="scroll">
+  <svg viewBox="0 0 960 260" role="img" aria-label="セキュリティ。ログイン済みで利用者IDが一致する本人だけがセキュリティルールを通過して自分のデータを読み書きできる。他のGoogleユーザーと未ログインの人は拒否される。">
+    <defs><marker id="a8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" class="d-ah-ok"/></marker></defs>
+    <rect x="16" y="20" width="270" height="56" rx="10" class="d-green"/><text x="30" y="44" class="d-t">あなた</text><text x="30" y="63" class="d-s">Google でログイン済み（uid が一致）</text>
+    <rect x="16" y="102" width="270" height="56" rx="10" class="d-box"/><text x="30" y="126" class="d-t">ほかの Google ユーザー</text><text x="30" y="145" class="d-s">ログインしていても uid が違う</text>
+    <rect x="16" y="184" width="270" height="56" rx="10" class="d-box"/><text x="30" y="208" class="d-t">ログインしていない人</text><text x="30" y="227" class="d-s">公開URLやプロジェクト名を知っていても</text>
+
+    <rect x="420" y="40" width="200" height="180" rx="12" class="d-amber"/>
+    <text x="520" y="70" text-anchor="middle" class="d-t">セキュリティルール</text>
+    <text x="520" y="92" text-anchor="middle" class="d-s">Firestore の入口の門番</text>
+    <text x="520" y="128" text-anchor="middle" class="d-m">request.auth.uid == uid</text>
+    <text x="520" y="150" text-anchor="middle" class="d-s">「ログイン中の本人の箱」</text><text x="520" y="168" text-anchor="middle" class="d-s">の時だけ通す</text>
+    <text x="520" y="200" text-anchor="middle" class="d-s">それ以外はすべて拒否</text>
+
+    <line x1="288" y1="48" x2="416" y2="48" class="d-ln d-ok" marker-end="url(#a8)"/><text x="352" y="40" text-anchor="middle" class="d-ok-t">○ 通過</text>
+    <line x1="288" y1="130" x2="412" y2="130" class="d-ln d-ng"/><line x1="404" y1="122" x2="420" y2="138" class="d-ln d-ng"/><line x1="420" y1="122" x2="404" y2="138" class="d-ln d-ng"/><text x="348" y="122" text-anchor="middle" class="d-ng-t">× 拒否</text>
+    <line x1="288" y1="212" x2="412" y2="212" class="d-ln d-ng"/><line x1="404" y1="204" x2="420" y2="220" class="d-ln d-ng"/><line x1="420" y1="204" x2="404" y2="220" class="d-ln d-ng"/><text x="348" y="204" text-anchor="middle" class="d-ng-t">× 拒否</text>
+
+    <line x1="622" y1="48" x2="736" y2="48" class="d-ln d-ok"/><line x1="736" y1="48" x2="736" y2="90" class="d-ln d-ok" marker-end="url(#a8)"/>
+    <rect x="660" y="94" width="284" height="92" rx="10" class="d-blue"/><text x="674" y="120" class="d-t">users / {あなたの uid} / …</text><text x="674" y="142" class="d-s">あなたの記録・体組成・種目・設定</text><text x="674" y="162" class="d-s">読み書きできるのは本人だけ</text>
+  </svg></div>
+  <figcaption><b>図6　アクセス制御。</b>アプリのプログラムや <code>firebaseConfig</code>（接続先の情報）は公開されていますが、これは「金庫の住所」であって鍵ではありません。鍵にあたるのは Google ログインと上のルールです。</figcaption></figure>
+  <div class="note"><b>補足：公開されているもの・いないもの</b>公開＝アプリのプログラム一式（GitHub の公開リポジトリ）と接続先情報。非公開＝トレーニング記録、体組成、メールアドレス、パスワード（そもそもアプリは受け取りません）。</div>
+</section>
+
+<section id="s9">
+  <h2>9. 修正が公開されるまでの流れ</h2>
+  <figure class="fig"><div class="scroll">
+  <svg viewBox="0 0 960 200" role="img" aria-label="公開の流れ。開発用PCで修正してgit pushすると、GitHubリポジトリのmainブランチに入り、GitHub Actionsが自動で起動してappフォルダをGitHub Pagesへ公開し、iPhoneやPCは次に開いた時に新しい版を取得する。">
+    <defs><marker id="a9" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" class="d-ah"/></marker></defs>
+    <rect x="5" y="56" width="150" height="104" rx="10" class="d-box"/><rect x="205" y="56" width="150" height="104" rx="10" class="d-amber"/><rect x="405" y="56" width="150" height="104" rx="10" class="d-amber"/><rect x="605" y="56" width="150" height="104" rx="10" class="d-amber"/><rect x="805" y="56" width="150" height="104" rx="10" class="d-red"/>
+    <line x1="157" y1="108" x2="202" y2="108" class="d-ln" marker-end="url(#a9)"/><line x1="357" y1="108" x2="402" y2="108" class="d-ln" marker-end="url(#a9)"/><line x1="557" y1="108" x2="602" y2="108" class="d-ln" marker-end="url(#a9)"/><line x1="757" y1="108" x2="802" y2="108" class="d-ln" marker-end="url(#a9)"/>
+    <text x="180" y="44" text-anchor="middle" class="d-l">git push</text><text x="380" y="44" text-anchor="middle" class="d-l">自動で起動</text><text x="580" y="44" text-anchor="middle" class="d-l">公開</text><text x="780" y="44" text-anchor="middle" class="d-l">更新を取得</text>
+    <text x="80" y="88" text-anchor="middle" class="d-t">開発用PC</text><text x="80" y="110" text-anchor="middle" class="d-s">プログラムを修正</text><text x="80" y="128" text-anchor="middle" class="d-s">版番号を上げる</text>
+    <text x="280" y="88" text-anchor="middle" class="d-t">GitHub リポジトリ</text><text x="280" y="110" text-anchor="middle" class="d-s">main ブランチ</text><text x="280" y="128" text-anchor="middle" class="d-s">変更履歴を保管</text>
+    <text x="480" y="88" text-anchor="middle" class="d-t">GitHub Actions</text><text x="480" y="110" text-anchor="middle" class="d-s">app/ フォルダを</text><text x="480" y="128" text-anchor="middle" class="d-s">取り出して公開準備</text>
+    <text x="680" y="88" text-anchor="middle" class="d-t">GitHub Pages</text><text x="680" y="110" text-anchor="middle" class="d-s">公開URLで配信</text><text x="680" y="128" text-anchor="middle" class="d-s">（1〜2分で反映）</text>
+    <text x="880" y="88" text-anchor="middle" class="d-t">iPhone / PC</text><text x="880" y="110" text-anchor="middle" class="d-s">開いた時に裏で取得</text><text x="880" y="128" text-anchor="middle" class="d-s">次の起動から新しい版</text>
+  </svg></div>
+  <figcaption><b>図7　公開の流れ。</b>人が行うのは左端の「修正して push」だけで、あとは自動です。端末側は、開いた時に裏で新しいファイルを取り込み、その次の起動から新しい版になります（すぐ反映したい時はアプリを2回開き直します）。</figcaption></figure>
+</section>
+
+<section id="s10">
+  <h2>10. 用語集</h2>
+  <div class="tbl"><table>
+    <tr><th>用語</th><th>意味</th></tr>
+    <tr><td>PWA</td><td>Web ページをアプリのように使える仕組み。ホーム画面にアイコンを置け、全画面で開き、電波がなくても起動できる。</td></tr>
+    <tr><td>GitHub Pages</td><td>GitHub が提供する、ファイルをそのまま Web 公開する無料サービス。</td></tr>
+    <tr><td>GitHub Actions</td><td>GitHub 上で決まった作業を自動実行する仕組み。ここでは公開作業を自動化している。</td></tr>
+    <tr><td>Firebase</td><td>Google のアプリ向けクラウドサービス群。このアプリはログイン（Authentication）とデータベース（Firestore）を使う。</td></tr>
+    <tr><td>uid</td><td>Firebase がログインした人ごとに発行する ID。データの持ち主を区別する。</td></tr>
+    <tr><td>Service Worker</td><td>ブラウザの裏で動く小さなプログラム。ファイルの控え（キャッシュ）を管理する。</td></tr>
+    <tr><td>localStorage / IndexedDB</td><td>ブラウザが端末内に持つ保存領域。前者は小さなメモ帳、後者は本格的な保管箱。</td></tr>
+    <tr><td>SDK</td><td>サービスを使うための公式の部品一式。ここでは Firebase JS SDK 12.19.0。</td></tr>
+    <tr><td>推定1RM</td><td>1回だけ挙げられる最大重量の推定値。このアプリでは <code>重量 ×（1 + 回数 ÷ 40）</code>。</td></tr>
+  </table></div>
+</section>
+
+<footer>WorkOut Note 構成図 ／ v1.1.1 時点の内容です。構成を変更した時は本書も更新してください。</footer>
+</div>
