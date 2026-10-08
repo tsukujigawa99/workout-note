@@ -76,7 +76,7 @@ footer{color:var(--ink-2);font-size:12.5px;border-top:1px solid var(--line);padd
 <header class="doc">
   <div class="kicker">WORKOUT NOTE / DESIGN DOCUMENT</div>
   <h1>WorkOut Note 設計書</h1>
-  <div class="meta"><span>対象バージョン：v1.1.1</span><span>作成日：2026-09-17</span><span>関連：構成図・手順書（同フォルダ）、docs/01〜05（経緯と詳細仕様）</span></div>
+  <div class="meta"><span>対象バージョン：v1.2.0</span><span>作成日：2026-09-17</span><span>関連：構成図・手順書（同フォルダ）、docs/01〜06（経緯と詳細仕様）</span></div>
   <p class="lead">このアプリを後から直す人（将来の自分を含む）が、<b>どこに何があり、なぜそう作ったのか</b>を短時間でつかむための文書です。全体像は構成図、操作と運用は手順書を参照してください。</p>
 </header>
 
@@ -128,6 +128,7 @@ footer{color:var(--ink-2);font-size:12.5px;border-top:1px solid var(--line);padd
     <tr><td>RM計算機</td><td>推定1RM と回数別（3,5,8,10,12,15回）の目安重量。</td><td class="mono">sheets.js</td></tr>
     <tr><td>テーマ切替</td><td>赤／黒をボタン1つで切替。端末ごとに記憶（同期しない）。</td><td class="mono">main.js, app.css</td></tr>
     <tr><td>同期とログイン</td><td>Google ログイン、Firestore 同期、端末内記録の移行、同期状態の表示、再接続。</td><td class="mono">cloud.js, auth.js, store-firebase.js, migrate.js</td></tr>
+    <tr><td>記録写真（v1.2.0）</td><td>ジムで撮った写真の上に、その日の種目・セット（重量×回数）・推定RMを白または黒のカードで重ね、1枚の画像として保存・共有。写真は端末内で合成するだけで、アプリにもクラウドにも保存しない。左右の位置切替、収まらない時は自動縮小。</td><td class="mono">photo.js, photo-layout.js, home.js</td></tr>
   </table></div>
 </section>
 
@@ -242,6 +243,8 @@ settings : { step: 2.5, timerSec: 90, updatedAt }</code></pre>
 │     ├─ auth.js              ← Firebase SDK の読み込みとログイン
 │     ├─ migrate.js           ← 端末内記録のクラウドへの移行
 │     ├─ firebase-config.js   ← 接続先情報と SDK のバージョン
+│     ├─ photo.js             ← 記録写真（写真の読み込み・合成・保存共有のシート）
+│     ├─ photo-layout.js      ← 記録写真の文字組みと収まり計算（純粋関数）
 │     └─ screens/             ← home / pick / entry / history / analysis / body / settings / master / sheets
 ├─ tests/test.html            ← 自動テスト（ブラウザで開くと実行）
 ├─ firestore.rules            ← セキュリティルールの控え（適用はコンソールで）
@@ -370,7 +373,7 @@ store.syncState() / store.onSync(cb) / store.onError(cb) / store.onNotice(cb)</c
   <h2>13. テスト設計</h2>
   <div class="tbl"><table>
     <tr><th>種類</th><th>内容</th></tr>
-    <tr><td>自動テスト</td><td><code>tests/test.html</code> をブラウザで開くと実行（v1.1.1 時点で 150 件、全 PASS）。対象は計算、日付、URL 解析、store の保存・削除・退避、Firestore を模した部品を使った同期（遅れて届くスナップショット、未 ready 時の保存拒否、切替中の保存不可、移行、再接続、ログイン連打など）、設定と Service Worker とルールの整合。</td></tr>
+    <tr><td>自動テスト</td><td><code>tests/test.html</code> をブラウザで開くと実行（v1.2.0 時点で 160 件、全 PASS）。対象は計算、日付、URL 解析、store の保存・削除・退避、Firestore を模した部品を使った同期（遅れて届くスナップショット、未 ready 時の保存拒否、切替中の保存不可、移行、再接続、ログイン連打など）、設定と Service Worker とルールの整合、記録写真の文字組みと縮小計算。</td></tr>
     <tr><td>独立した手動テスト</td><td>開発とは別の担当が、スマホ幅（320〜430px）と PC 幅で実際に操作。既知のデータを入れて集計値を手計算と照合し、異常入力・戻る操作・両テーマ・誤タップを確認。指摘は修正後に再確認。</td></tr>
     <tr><td>実機・実ログインでの確認（利用者）</td><td>開発側は Google にログインできないため、ログイン後の同期、移行、オフライン記録、iPhone のホーム画面アプリからのログイン、音、ノッチ周りは利用者が確認する（手順書 5章）。</td></tr>
   </table></div>
@@ -394,8 +397,9 @@ store.syncState() / store.onSync(cb) / store.onError(cb) / store.onNotice(cb)</c
     <tr><td>v1.0.2</td><td>誤タップ・二重戻りの防止、320px 対応、退避データの整理など。</td></tr>
     <tr><td>v1.1.0</td><td>Firebase 同期と Google ログイン、端末内記録の移行。</td></tr>
     <tr><td>v1.1.1</td><td>同期の安全対策（一覧の作り直し、ready まで保存拒否、切替中の入力停止、種目の追加マージ、自動再接続）。GitHub Pages で公開。</td></tr>
+    <tr><td>v1.2.0</td><td>記録写真（写真にその日の記録を載せて保存・共有）。仕様は docs/06。</td></tr>
   </table></div>
 </section>
 
-<footer>WorkOut Note 設計書 ／ v1.1.1 時点の内容です。設計を変更した時は本書と改版履歴を更新してください。</footer>
+<footer>WorkOut Note 設計書 ／ v1.2.0 時点の内容です。設計を変更した時は本書と改版履歴を更新してください。</footer>
 </div>

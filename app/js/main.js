@@ -17,6 +17,7 @@ import body from './screens/body.js';
 import settings from './screens/settings.js';
 import master from './screens/master.js';
 import * as sheets from './screens/sheets.js';
+import * as photo from './photo.js';
 
 const SCREENS = { home, pick, entry, history: historyScr, analysis, body, settings, master };
 const TAB_SCREENS = ['home', 'analysis', 'body', 'settings'];
@@ -91,7 +92,7 @@ const ACTIONS = {
     if (S.route.name === 'settings') render(true);
   },
 };
-[sheets, ...Object.values(SCREENS)].forEach(m => Object.assign(ACTIONS, m.actions));
+[sheets, photo, ...Object.values(SCREENS)].forEach(m => Object.assign(ACTIONS, m.actions));
 
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-act]');

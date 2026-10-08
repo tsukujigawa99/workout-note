@@ -114,6 +114,12 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;strok
 .setline em{font-style:normal;font-family:var(--body);font-size:11px;color:var(--ink-2);margin-left:8px}
 .empty{border:1.5px dashed var(--line);border-radius:12px;padding:22px 16px;text-align:center;color:var(--ink-2)}
 .memo{width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;padding:8px 2px;font-size:16px;border-radius:0}
+/* 記録写真（写真にその日の記録を載せる） */
+.photo-row{display:flex;justify-content:center}
+.photo-row .btn{max-width:100%;padding:0 18px;text-align:center}
+.photo-prev{display:block;max-width:100%;max-height:55vh;width:auto;height:auto;margin:0 auto;border-radius:12px;background:var(--sunk)}
+.photo-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.photo-opts>div{display:flex;flex-direction:column;gap:12px}
 
 /* ---------- picker ---------- */
 .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}

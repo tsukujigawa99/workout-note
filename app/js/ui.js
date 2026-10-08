@@ -17,6 +17,7 @@ const IC = {
   copy: 'M9 9h11v11H9zM5 15H4V4h11v1', timer: 'M12 9v4l3 2M9 2h6M12 5a8 8 0 100 16 8 8 0 000-16z', check: 'M5 12l5 5 9-10',
   bell: 'M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12', next: 'M9 5l7 7-7 7', trash: 'M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13', x: 'M6 6l12 12M18 6L6 18',
   up: 'M6 15l6-6 6 6', down: 'M6 9l6 6 6-6', edit: 'M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4',
+  camera: 'M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 100-8 4 4 0 000 8z',
 };
 export const ic = n => n === 'skin'
   ? '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18z" fill="currentColor"/></svg>'

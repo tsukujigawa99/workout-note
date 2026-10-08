@@ -3,7 +3,8 @@ import { S, go, rerender, setDate } from '../state.js';
 import { store } from '../store.js';
 import { cloud } from '../cloud.js';
 import { syncBadge } from '../store-firebase.js';
-import { esc, ic, toast, MONTHS, WD, exName, exColor, dot } from '../ui.js';
+import { $, esc, ic, toast, MONTHS, WD, exName, exColor, dot } from '../ui.js';
+import { openPhotoSheet } from '../photo.js';
 import { todayKey, fromKey, slash, calendarCells, isTrained, monthDays, totalDays, rangeVol, weeklyVols, totalVol, ton, vehicles, VEHICLES, validSets, itemRM, f2, fw, shiftMonth, isKey, isUsableDate } from '../calc.js';
 
 function render() {
@@ -35,6 +36,8 @@ function render() {
     + '<div class="pad">' + loginCard + '<div class="cta-row"><button class="btn pri" data-act="pick">' + ic('plus') + (S.date === TK ? '本日の' : '') + 'トレーニングを追加</button><button class="btn" data-act="rmcalc">' + ic('bell') + 'RM計算機</button></div>'
     + '<div class="dayhead"><h2>' + slash(S.date) + '<small>(' + WD[d.getDay()] + ')' + (S.date === TK ? ' 今日' : '') + '</small></h2><button class="btn sm ghost" data-act="copyday">' + ic('copy') + '過去の日からコピー</button></div>'
     + '<div class="records">' + recs + '</div>'
+    + (items.length ? '<div class="photo-row"><button class="btn sm ghost" data-act="photo">' + ic('camera') + '写真に記録を載せる</button></div>' : '')
+    + '<input type="file" id="photo-in" accept="image/*" hidden aria-hidden="true">'
     + '<input class="memo" id="daymemo" maxlength="200" autocomplete="off" placeholder="この日のメモ（体調・睡眠など）" aria-label="この日のメモ" value="' + esc(log ? log.memo : '') + '"></div>';
 }
 
@@ -47,6 +50,7 @@ const actions = {
   },
   goToday() { setDate(todayKey()); rerender(true); },
   pick() { go('#/pick/' + S.date); },
+  photo() { const i = $('#photo-in'); if (i) i.click(); },   // iOS はユーザー操作の中で同期的に呼ばないとピッカーが開かない
 };
 
 function onInput(t) {
@@ -55,4 +59,12 @@ function onInput(t) {
   store.saveDay(S.date, { memo: t.value, items: cur ? cur.items : [] });   // 再描画しない（フォーカス維持）
 }
 
-export default { render, actions, onInput };
+/** 写真の選択（隠し input）。同じ写真を続けて選べるよう value を空に戻す */
+function onChange(t) {
+  if (t.id !== 'photo-in') return;
+  const f = t.files && t.files[0];
+  if (f) openPhotoSheet(f, S.date);
+  t.value = '';
+}
+
+export default { render, actions, onInput, onChange };

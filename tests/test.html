@@ -57,7 +57,7 @@ class MemStorage {
   json(k) { const v = this.getItem(k); return v == null ? null : JSON.parse(v); }
 }
 
-let C, St, D, F, M, AU, CL, CFG;
+let C, St, D, F, M, AU, CL, CFG, PL;
 try {
   C = await import('../app/js/calc.js');
   St = await import('../app/js/store.js');
@@ -67,6 +67,7 @@ try {
   AU = await import('../app/js/auth.js');
   CL = await import('../app/js/cloud.js');
   CFG = await import('../app/js/firebase-config.js');
+  PL = await import('../app/js/photo-layout.js');
 } catch (e) {
   group('読み込み'); await test('モジュールの import', () => { throw e; }); finish(); throw e;
 }
@@ -697,12 +698,48 @@ await test('F7: SDK 取得失敗の状態でログインを押した時のメッ
   x.cloud.signIn(); await tick(60); eq(x.toasts.length, n + 1); ok(x.toasts[n].includes('オフラインのためログインできません'));
 });
 
+/* ================= photo-layout: 記録写真（仕様書06 4.4〜4.5） ================= */
+group('photo-layout: 記録写真の純粋関数（収まり判定・文字列）');
+const nameOf = id => ({ sp: 'ショルダープレス', sr: 'サイドレイズ' }[id] || '（不明な種目）'), colorOf = id => (id === 'sp' || id === 'sr' ? '#8A63C9' : 'var(--ink-2)');
+await test('fitPlan: 収まる時は scale 1.0・全種目', () => { eq(PL.fitPlan([4, 3, 2, 3], 5000, 1), { scale: 1, count: 4 }); eq(PL.fitPlan([4], PL.needH([4], 1, 1), 1), { scale: 1, count: 1 }); });
+await test('fitPlan: カード高 = 18×2 + 36 + 40×セット数、間隔 14（× u）', () => { eq(PL.cardH(4, 1, 1), 232); eq(PL.cardH(4, 0.5, 1), 116); eq(PL.needH([4, 3], 1, 1), 232 + 192 + 14); eq(PL.needH([], 1, 1), 0); });
+await test('fitPlan: 1px でも足りなければ 0.05 刻みで縮小（最初に収まる scale）', () => {
+  eq(PL.fitPlan([4], 231, 1), { scale: 0.95, count: 1 });
+  const r = PL.fitPlan([4, 4, 4, 4], 700, 1); eq(r.count, 4); ok(PL.needH([4, 4, 4, 4], 1, r.scale) <= 700); ok(PL.needH([4, 4, 4, 4], 1, Math.round((r.scale + 0.05) * 100) / 100) > 700, 'ひとつ大きい scale でも収まってしまう');
+  ok([1, .95, .9, .85, .8, .75, .7, .65, .6].includes(r.scale), 'scale が 0.05 刻みでない: ' + r.scale);
+});
+await test('fitPlan: 0.6 でも収まらない時は 0.6 のまま末尾から外し、「他 N 種目」の行の分も確保する', () => {
+  const sc = [4, 4, 4, 4, 4, 4, 4, 4], r = PL.fitPlan(sc, 1000, 1);
+  eq(r.scale, 0.6); ok(r.count < 8 && r.count > 0, 'count=' + r.count);
+  ok(PL.needH(sc.slice(0, r.count), 1, 0.6) + PL.OTHERS_H <= 1000); ok(PL.needH(sc.slice(0, r.count + 1), 1, 0.6) + PL.OTHERS_H > 1000, 'もう1枚入る');
+  eq(PL.fitPlan([4], 10, 1), { scale: 0.6, count: 0 });
+});
+await test('fitPlan: 空配列は scale 1.0・0 枚', () => { eq(PL.fitPlan([], 100, 1), { scale: 1, count: 0 }); });
+await test('photoText: 日付・曜日・今日表記', () => {
+  const t = PL.photoText(dayOf(), '2026-10-08', '2026-10-08', nameOf, colorOf); eq(t.date, '2026/10/08'); eq(t.sub, '(木) 今日'); eq(t.items, []);
+  eq(PL.photoText(dayOf(), '2026-10-08', '2026-10-09', nameOf, colorOf).sub, '(木)'); eq(PL.photoText(null, '2026-10-10', '2026-10-10', nameOf, colorOf).sub, '(土) 今日');
+});
+await test('photoText: 種目名・部位色・RM（w×(1+r/40) の最大を小数2桁）', () => {
+  const t = PL.photoText(dayOf({ ex: 'sp', sets: [set(45, 10), set(45, 10), set(50, 6), set(40, 8)] }), '2026-10-08', '2026-10-08', nameOf, colorOf);
+  eq(t.items.length, 1); eq(t.items[0].name, 'ショルダープレス'); eq(t.items[0].color, '#8A63C9'); eq(t.items[0].rm, '57.50');
+  eq(t.items[0].sets, [{ n: 1, w: '45.0', r: 10, assist: false }, { n: 2, w: '45.0', r: 10, assist: false }, { n: 3, w: '50.0', r: 6, assist: false }, { n: 4, w: '40.0', r: 8, assist: false }]);
+});
+await test('photoText: 重量が空なら 0.0、1.25 刻みは小数2桁、assist は true', () => {
+  const t = PL.photoText(dayOf({ ex: 'sr', sets: [set(null, 12), set(11.25, 8, '', true)] }), '2026-10-08', '2026-10-08', nameOf, colorOf);
+  eq(t.items[0].sets, [{ n: 1, w: '0.0', r: 12, assist: false }, { n: 2, w: '11.25', r: 8, assist: true }]); eq(t.items[0].rm, '13.50');
+});
+await test('photoText: セットのメモは載せない・無効セット（回数0）は除く・有効セットの無い種目は除く・不明な種目名', () => {
+  const t = PL.photoText(dayOf({ ex: 'sp', sets: [set(40, 10, 'きつかった'), set(40, 0, 'x')] }, { ex: 'sr', sets: [set(10, 0)] }, { ex: 'zz', sets: [set(20, 5)] }), '2026-10-08', '2026-10-08', nameOf, colorOf);
+  eq(t.items.map(i => i.name), ['ショルダープレス', '（不明な種目）']); eq(t.items[0].sets.length, 1); ok(!('memo' in t.items[0].sets[0])); eq(JSON.stringify(t).includes('きつかった'), false); eq(t.items[1].color, 'var(--ink-2)');
+});
+await test('photoText: 種目なし・day なしは items: []', () => { eq(PL.photoText({ memo: 'x', items: [] }, '2026-10-08', '2026-10-08', nameOf, colorOf).items, []); eq(PL.photoText(undefined, '2026-10-08', '2026-10-08', nameOf, colorOf).items, []); });
+
 group('Firebase: 設定・SW・ルールの整合');
 await test('firebaseConfig と SDK の URL', () => { eq(CFG.firebaseConfig.projectId, 'workout-note-b45cd'); eq(CFG.firebaseConfig.authDomain, 'workout-note-b45cd.firebaseapp.com'); ok(/^\d+\.\d+\.\d+$/.test(CFG.SDK_VERSION)); eq(CFG.SDK_BASE, 'https://www.gstatic.com/firebasejs/' + CFG.SDK_VERSION + '/'); eq(CFG.SDK_FILES, ['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js']); });
 await test('sw.js: SDK バージョンが一致し、新規ファイルがアプリシェルに入っている／API・認証の通信には触らない', async () => {
   const sw = await (await fetch('../app/sw.js', { cache: 'no-store' })).text();
-  eq(sw.match(/const SDK_VERSION = '([^']+)'/)[1], CFG.SDK_VERSION); eq(sw.match(/const CACHE_VERSION = '([^']+)'/)[1], 'v' + D.APP_VERSION); eq(D.APP_VERSION, '1.1.1');
-  ['js/firebase-config.js', 'js/auth.js', 'js/store-firebase.js', 'js/migrate.js', 'js/cloud.js'].forEach(f => ok(sw.includes("'" + f + "'"), f + ' が SHELL に無い'));
+  eq(sw.match(/const SDK_VERSION = '([^']+)'/)[1], CFG.SDK_VERSION); eq(sw.match(/const CACHE_VERSION = '([^']+)'/)[1], 'v' + D.APP_VERSION); eq(D.APP_VERSION, '1.2.0');
+  ['js/firebase-config.js', 'js/auth.js', 'js/store-firebase.js', 'js/migrate.js', 'js/cloud.js', 'js/photo.js', 'js/photo-layout.js'].forEach(f => ok(sw.includes("'" + f + "'"), f + ' が SHELL に無い'));
   const code = sw.split('\n').filter(l => !l.trim().startsWith('//')).join('\n'); ['firestore.googleapis.com', 'identitytoolkit', 'securetoken', 'apis.google.com', 'firebaseapp.com'].forEach(h => ok(!code.includes(h), h + ' を SW のコードで扱っている'));
 });
 await test('firestore.rules: 本人だけが自分の users/{uid} 以下を読み書きできる', async () => {
