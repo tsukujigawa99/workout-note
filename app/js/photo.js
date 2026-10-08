@@ -66,14 +66,18 @@ function clip(ctx, s, maxW) {
   return '…';
 }
 const px = (n, f) => Math.round(n * 100) / 100 + 'px ' + f;
-/** 写真（base）の上に見出しとカードを描く */
-function compose(cv, base, text, pos, style) {
+/** 写真（base）の上に見出しとカードを描く。flip が真なら写真だけを左右反転する（文字・カードは反転しない） */
+function compose(cv, base, text, pos, style, flip) {
   const W = cv.width, H = cv.height, ctx = cv.getContext('2d'), C = STYLES[style] || STYLES.white;
   const u = Math.min(W, H) / 1080, m = 28 * u;
   const P = Math.min(560 * u, Math.max(400 * u, Math.round(0.46 * W)));
   const x0 = pos === 'left' ? m : W - m - P;
   ctx.clearRect(0, 0, W, H);
-  ctx.drawImage(base, 0, 0, W, H);
+  if (flip) {
+    ctx.save(); ctx.translate(W, 0); ctx.scale(-1, 1); ctx.drawImage(base, 0, 0, W, H); ctx.restore();
+  } else {
+    ctx.drawImage(base, 0, 0, W, H);
+  }
   ctx.textBaseline = 'alphabetic';
 
   // 見出し: 日付（Oswald 600/64）＋ (曜) 今日（Noto Sans JP 500/26）。ベースラインを揃える。白文字＋影
@@ -164,7 +168,7 @@ function render() {
   st.file = null; st.blob = null; setShare(false);
   const my = st.seq, gen = ++st.gen;
   try {
-    compose(st.cv, st.base, st.text, st.pos, st.style);
+    compose(st.cv, st.base, st.text, st.pos, st.style, st.flip);
     const stage = document.getElementById('photo-stage');
     if (stage && st.cv.parentNode !== stage) stage.replaceChildren(st.cv);
   } finally { st.drawing = false; }
@@ -186,11 +190,11 @@ export async function openPhotoSheet(file, dateKey) {
   const text = photoText(store.day(dateKey), dateKey, todayKey(), exName, exColor);
   const canShare = !!(navigator.share && navigator.canShare);
   sheet('記録写真', '<div id="photo-stage"><div class="empty" role="status">写真を読み込んでいます…</div></div>'
-    + '<div class="photo-opts">' + segHtml('位置', 'photoPos', 'right', [['left', '左'], ['right', '右']]) + segHtml('カード', 'photoStyle', 'white', [['white', '白'], ['black', '黒']]) + '</div>'
+    + '<div class="photo-opts">' + segHtml('位置', 'photoPos', 'right', [['left', '左'], ['right', '右']]) + segHtml('カード', 'photoStyle', 'white', [['white', '白'], ['black', '黒']]) + segHtml('反転', 'photoFlip', 'off', [['off', 'なし'], ['on', 'あり']]) + '</div>'
     + '<p class="note">写真はこの端末の中だけで合成します。アプリには保存されず、どこにも送信されません。</p>'
     + '<div class="btnrow"><button class="btn ghost" data-act="photoPick">別の写真を選ぶ</button><button class="btn pri" id="photo-share" data-act="photoShare" disabled>保存・共有</button></div>'
     + (canShare ? '<p class="note">iPhone では共有画面の「画像を保存」で写真に保存できます。</p>' : ''));
-  st = { seq: my, gen: 0, dateKey, text, pos: 'right', style: 'white', bmp: null, base: null, cv: null, file: null, blob: null, url: null, drawing: false, dirty: false, obs: null };
+  st = { seq: my, gen: 0, dateKey, text, pos: 'right', style: 'white', flip: false, bmp: null, base: null, cv: null, file: null, blob: null, url: null, drawing: false, dirty: false, obs: null };
   // シートが閉じられたら（×／背景／戻る／別画面へ遷移）後始末。sheet() は中身を消すだけなので、要素の消失で検知する
   const host = $('#sheet');
   if (host && typeof MutationObserver === 'function') {
@@ -220,6 +224,7 @@ export async function openPhotoSheet(file, dateKey) {
 export const actions = {
   photoPos(v) { if (!st || (v !== 'left' && v !== 'right')) return; st.pos = v; mark('photoPos', v); render(); },
   photoStyle(v) { if (!st || !STYLES[v]) return; st.style = v; mark('photoStyle', v); render(); },
+  photoFlip(v) { if (!st || (v !== 'on' && v !== 'off')) return; st.flip = v === 'on'; mark('photoFlip', v); render(); },
   photoPick() { const i = $('#photo-in'); if (i) i.click(); },
   photoShare() {
     if (!st || !st.file) return;

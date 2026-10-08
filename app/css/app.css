@@ -118,7 +118,7 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;strok
 .photo-row{display:flex;justify-content:center}
 .photo-row .btn{max-width:100%;padding:0 18px;text-align:center}
 .photo-prev{display:block;max-width:100%;max-height:55vh;width:auto;height:auto;margin:0 auto;border-radius:12px;background:var(--sunk)}
-.photo-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.photo-opts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .photo-opts>div{display:flex;flex-direction:column;gap:12px}
 
 /* ---------- picker ---------- */

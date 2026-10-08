@@ -1,6 +1,6 @@
 // sw.js — アプリシェルのキャッシュ（stale-while-revalidate）＋ Firebase SDK のキャッシュ（cache-first）。オフライン起動可
 // ファイルを更新したら CACHE_VERSION を上げる（旧キャッシュは activate で削除）
-const CACHE_VERSION = 'v1.2.0';
+const CACHE_VERSION = 'v1.2.1';
 // Firebase JS SDK のバージョン。js/firebase-config.js の SDK_VERSION と必ず揃えること（tests/test.html で一致を検査）
 const SDK_VERSION = '12.19.0';
 const SHELL_CACHE = 'won-shell-' + CACHE_VERSION;

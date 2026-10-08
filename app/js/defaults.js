@@ -1,6 +1,6 @@
 // defaults.js — 初期の部位・種目マスタ、設定初期値
 export const APP_NAME = 'WorkOut Note';
-export const APP_VERSION = '1.2.0';   // sw.js の CACHE_VERSION も合わせて上げること
+export const APP_VERSION = '1.2.1';   // sw.js の CACHE_VERSION も合わせて上げること
 
 export const DEFAULT_PARTS = [
   { id: 'chest', name: '胸', color: '#E07A3F' },

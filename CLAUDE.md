@@ -7,7 +7,7 @@
 - 公開URL: https://tsukujigawa99.github.io/workout-note/ （main へ push → GitHub Actions が `app/` を Pages へ自動デプロイ、1〜2分）
 - リポジトリ: https://github.com/tsukujigawa99/workout-note
 - Firebase プロジェクト: `workout-note-b45cd`（Firestore 東京、Google ログイン）。接続情報は `app/js/firebase-config.js`（公開値）。
-- 現行版: v1.2.0（2026-10-08、記録写真を追加）。自動テスト `tests/test.html` 160件 PASS。
+- 現行版: v1.2.1（2026-10-09、記録写真＋写真の左右反転）。自動テスト `tests/test.html` 160件 PASS。
 
 ## 体制（依頼者指定・必ず維持）
 - PM／窓口 = メイン会話。依頼者とのやり取り、仕様決定、報告。
@@ -31,7 +31,7 @@
 
 ## 未完了・確認待ち（2026-10-08 時点）
 1. 依頼者の実ログイン確認（手順書5章）: PC/iPhone の同期、移行、オフライン、**iPhone ホーム画面アプリからの Google ログイン**（最大の懸念。失敗時の代替案 = Google OAuth の ID トークンをリダイレクトで受けて `signInWithCredential`）。
-1b. 記録写真（v1.2.0）の iPhone 実機確認: ホーム画面アプリから「写真に記録を載せる」→ カメラ/写真が選べるか、「保存・共有」→ 共有画面の「画像を保存」で写真に入るか。PC での確認は済み（テスト担当）。
+1b. 記録写真の iPhone 実機: 依頼者が内カメラで撮影して使えたことは確認済み（2026-10-09、反転の要望が来たため）。「反転 あり」で保存した結果が意図どおりかは回答待ち。
 2. Firebase コンソール設定が済んだか未確認: Firestore ルール（`firestore.rules`）の適用、承認済みドメインに `tsukujigawa99.github.io`。
 3. 友達利用: 利用者をメールアドレス許可リストで限定するルール案と「友達向けかんたん手順」を提案中。友達のスマホが iPhone か Android か回答待ち。
 4. 未判断: 赤テーマのコントラスト（カレンダー記録あり日 3.1:1）は実機確認後に判断。
