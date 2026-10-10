@@ -7,7 +7,7 @@
 - 公開URL: https://tsukujigawa99.github.io/workout-note/ （main へ push → GitHub Actions が `app/` を Pages へ自動デプロイ、1〜2分）
 - リポジトリ: https://github.com/tsukujigawa99/workout-note
 - Firebase プロジェクト: `workout-note-b45cd`（Firestore 東京、Google ログイン）。接続情報は `app/js/firebase-config.js`（公開値）。
-- 現行版: v1.2.1（2026-10-09、記録写真＋写真の左右反転）。自動テスト `tests/test.html` 160件 PASS。
+- 現行版: v1.3.0（2026-10-10、記録写真のデザイン 4 種）。自動テスト `tests/test.html` 165件 PASS。
 
 ## 体制（依頼者指定・必ず維持）
 - PM／窓口 = メイン会話。依頼者とのやり取り、仕様決定、報告。
@@ -20,7 +20,7 @@
 - 見た目の基準は `mock/mock.html`（依頼者承認済み）。勝手に変えない。
 - ローカル確認: `python -m http.server 8765 --directory app`。テスト: リポジトリ直下を 8766 で配信し `/tests/test.html` を前面タブで開く。
 - リリース時は `app/sw.js` の `CACHE_VERSION` と `app/js/defaults.js` の `APP_VERSION` を両方上げる。新規ファイルは sw.js のシェル一覧にも追加。SDK 版を変える時は `firebase-config.js` と `sw.js` の両方。
-- 記録写真（`app/js/photo.js`）は写真を端末内の canvas で合成するだけ。写真をストレージ・Firestore に保存しない／送信しない（依頼者との約束に準じる）。
+- 記録写真（`app/js/photo.js`、描画は `photo-themes.js`）は写真を端末内の canvas で合成するだけ。写真をストレージ・Firestore に保存しない／送信しない（依頼者との約束に準じる）。追加フォント（Zen Maru Gothic / Yomogi / Cormorant Garamond / Noto Serif JP / Great Vibes / Permanent Marker / Oswald 700）は記録写真のシートを開いた時に動的に読み込む（index.html には足さない）。
 - 同期の設計原則「クラウドの記録を絶対に壊さない」（設計書8章）。ready まで保存拒否、切替中は入力停止、一覧は毎回作り直し。
 - 日付キーはローカル時刻（toISOString 禁止）。ユーザー入力は必ずエスケープ。入力中に再描画でフォーカスを飛ばさない。
 
@@ -31,7 +31,7 @@
 
 ## 未完了・確認待ち（2026-10-08 時点）
 1. 依頼者の実ログイン確認（手順書5章）: PC/iPhone の同期、移行、オフライン、**iPhone ホーム画面アプリからの Google ログイン**（最大の懸念。失敗時の代替案 = Google OAuth の ID トークンをリダイレクトで受けて `signInWithCredential`）。
-1b. 記録写真の iPhone 実機: 依頼者が内カメラで撮影して使えたことは確認済み（2026-10-09、反転の要望が来たため）。「反転 あり」で保存した結果が意図どおりかは回答待ち。
+1b. 記録写真の iPhone 実機: 依頼者が内カメラで撮影して使えたことは確認済み（2026-10-09）。v1.3.0 のデザイン 4 種（追加フォントの読み込み含む）を iPhone で試した結果は回答待ち。
 2. Firebase コンソール設定が済んだか未確認: Firestore ルール（`firestore.rules`）の適用、承認済みドメインに `tsukujigawa99.github.io`。
 3. 友達利用: 利用者をメールアドレス許可リストで限定するルール案と「友達向けかんたん手順」を提案中。友達のスマホが iPhone か Android か回答待ち。
 4. 未判断: 赤テーマのコントラスト（カレンダー記録あり日 3.1:1）は実機確認後に判断。
@@ -39,6 +39,6 @@
 6. `capture/` の画像（雲マッチョ等）は依頼者が置いたもの。用途未確認、リポジトリには含めていない。
 
 ## 文書
-- `docs/01_要件定義書.md`、`02_開発仕様書.md`、`04_フェーズ2仕様_Firebase同期.md`、`06_仕様_記録写真.md`（開発担当への指示の本体）
+- `docs/01_要件定義書.md`、`02_開発仕様書.md`、`04_フェーズ2仕様_Firebase同期.md`、`06_仕様_記録写真.md`、`07_仕様_記録写真デザイン.md`（開発担当への指示の本体）
 - `docs/03`/`05` 手順書（ご本人作業）、`docs/html/` に構成図・手順書・設計書の HTML 版（依頼者向け、最新）
 - `mock/mock.html` 承認済みモック、`firestore.rules`、`scripts/make_icons.py`

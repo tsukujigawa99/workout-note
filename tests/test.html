@@ -57,7 +57,7 @@ class MemStorage {
   json(k) { const v = this.getItem(k); return v == null ? null : JSON.parse(v); }
 }
 
-let C, St, D, F, M, AU, CL, CFG, PL;
+let C, St, D, F, M, AU, CL, CFG, PL, TH;
 try {
   C = await import('../app/js/calc.js');
   St = await import('../app/js/store.js');
@@ -68,6 +68,7 @@ try {
   CL = await import('../app/js/cloud.js');
   CFG = await import('../app/js/firebase-config.js');
   PL = await import('../app/js/photo-layout.js');
+  TH = await import('../app/js/photo-themes.js');
 } catch (e) {
   group('読み込み'); await test('モジュールの import', () => { throw e; }); finish(); throw e;
 }
@@ -734,12 +735,34 @@ await test('photoText: セットのメモは載せない・無効セット（回
 });
 await test('photoText: 種目なし・day なしは items: []', () => { eq(PL.photoText({ memo: 'x', items: [] }, '2026-10-08', '2026-10-08', nameOf, colorOf).items, []); eq(PL.photoText(undefined, '2026-10-08', '2026-10-08', nameOf, colorOf).items, []); });
 
+/* ================= photo-themes: 記録写真のデザイン（仕様書07 5章） ================= */
+group('photo-themes: 記録写真のデザイン（4 テーマの形）');
+const THEME_FNS = ['headerH', 'bottomReserve', 'drawBackdrop', 'drawHeader', 'drawCard', 'drawDecor'];
+await test('4 テーマ（normal / cute / chic / cool）があり、ラベルは ノーマル／かわいい／おしゃれ／かっこいい', () => {
+  eq(Object.keys(TH.THEMES), ['normal', 'cute', 'chic', 'cool']);
+  eq(Object.values(TH.THEMES).map(t => t.label), ['ノーマル', 'かわいい', 'おしゃれ', 'かっこいい']);
+});
+await test('各テーマに 6 つの関数がある', () => { Object.entries(TH.THEMES).forEach(([k, t]) => THEME_FNS.forEach(f => ok(typeof t[f] === 'function', k + '.' + f + ' が関数でない'))); });
+await test('headerH(u) は正の数で u に比例、bottomReserve(H) は 0 以上（ノーマルは 0、他は H に比例）', () => {
+  Object.entries(TH.THEMES).forEach(([k, t]) => { ok(t.headerH(1) > 0, k); near(t.headerH(2), t.headerH(1) * 2, k + ' headerH'); ok(t.bottomReserve(1000) >= 0, k); ok(Number.isFinite(t.bottomReserve(1000)), k); });
+  eq(TH.THEMES.normal.headerH(1), 102); eq(TH.THEMES.normal.bottomReserve(1600), 0);
+  near(TH.THEMES.cute.bottomReserve(1000), 160); near(TH.THEMES.chic.bottomReserve(1000), 170); near(TH.THEMES.cool.bottomReserve(1000), 180);
+});
+await test('fonts は空でなく [cssFont, "num"|"ja"] の形', () => {
+  Object.entries(TH.THEMES).forEach(([k, t]) => { ok(Array.isArray(t.fonts) && t.fonts.length > 0, k); t.fonts.forEach(a => { ok(/^\d{3} \d+px /.test(a[0]), k + ': ' + a[0]); ok(a[1] === 'num' || a[1] === 'ja', k + ': ' + a[1]); }); });
+});
+await test('bottomReserve を引いた avail でも fitPlan は仕様どおり（収まらなければ縮小→他 N 種目）', () => {
+  const u = 1200 / 1080, H = 1600, y = Math.round(0.075 * H) + TH.THEMES.cute.headerH(u), avail = H - y - TH.THEMES.cute.bottomReserve(H) - 28 * u;
+  const r = PL.fitPlan(Array(10).fill(4), avail, u); eq(r.scale, 0.6); ok(r.count > 0 && r.count < 10, 'count=' + r.count); ok(PL.needH(Array(r.count).fill(4), u, 0.6) + PL.OTHERS_H * u <= avail);
+  eq(PL.fitPlan([4, 3, 2, 3], avail, u), { scale: 1, count: 4 });
+});
+
 group('Firebase: 設定・SW・ルールの整合');
 await test('firebaseConfig と SDK の URL', () => { eq(CFG.firebaseConfig.projectId, 'workout-note-b45cd'); eq(CFG.firebaseConfig.authDomain, 'workout-note-b45cd.firebaseapp.com'); ok(/^\d+\.\d+\.\d+$/.test(CFG.SDK_VERSION)); eq(CFG.SDK_BASE, 'https://www.gstatic.com/firebasejs/' + CFG.SDK_VERSION + '/'); eq(CFG.SDK_FILES, ['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js']); });
 await test('sw.js: SDK バージョンが一致し、新規ファイルがアプリシェルに入っている／API・認証の通信には触らない', async () => {
   const sw = await (await fetch('../app/sw.js', { cache: 'no-store' })).text();
-  eq(sw.match(/const SDK_VERSION = '([^']+)'/)[1], CFG.SDK_VERSION); eq(sw.match(/const CACHE_VERSION = '([^']+)'/)[1], 'v' + D.APP_VERSION); eq(D.APP_VERSION, '1.2.1');
-  ['js/firebase-config.js', 'js/auth.js', 'js/store-firebase.js', 'js/migrate.js', 'js/cloud.js', 'js/photo.js', 'js/photo-layout.js'].forEach(f => ok(sw.includes("'" + f + "'"), f + ' が SHELL に無い'));
+  eq(sw.match(/const SDK_VERSION = '([^']+)'/)[1], CFG.SDK_VERSION); eq(sw.match(/const CACHE_VERSION = '([^']+)'/)[1], 'v' + D.APP_VERSION); eq(D.APP_VERSION, '1.3.0');
+  ['js/firebase-config.js', 'js/auth.js', 'js/store-firebase.js', 'js/migrate.js', 'js/cloud.js', 'js/photo.js', 'js/photo-layout.js', 'js/photo-themes.js'].forEach(f => ok(sw.includes("'" + f + "'"), f + ' が SHELL に無い'));
   const code = sw.split('\n').filter(l => !l.trim().startsWith('//')).join('\n'); ['firestore.googleapis.com', 'identitytoolkit', 'securetoken', 'apis.google.com', 'firebaseapp.com'].forEach(h => ok(!code.includes(h), h + ' を SW のコードで扱っている'));
 });
 await test('firestore.rules: 本人だけが自分の users/{uid} 以下を読み書きできる', async () => {

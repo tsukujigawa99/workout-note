@@ -120,6 +120,9 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;strok
 .photo-prev{display:block;max-width:100%;max-height:55vh;width:auto;height:auto;margin:0 auto;border-radius:12px;background:var(--sunk)}
 .photo-opts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .photo-opts>div{display:flex;flex-direction:column;gap:12px}
+.photo-theme{display:flex;flex-direction:column;gap:12px}
+.photo-theme .seg button{font-size:11px}
+.seg button:disabled{opacity:.4;cursor:default}
 
 /* ---------- picker ---------- */
 .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}

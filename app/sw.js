@@ -1,6 +1,6 @@
 // sw.js — アプリシェルのキャッシュ（stale-while-revalidate）＋ Firebase SDK のキャッシュ（cache-first）。オフライン起動可
 // ファイルを更新したら CACHE_VERSION を上げる（旧キャッシュは activate で削除）
-const CACHE_VERSION = 'v1.2.1';
+const CACHE_VERSION = 'v1.3.0';
 // Firebase JS SDK のバージョン。js/firebase-config.js の SDK_VERSION と必ず揃えること（tests/test.html で一致を検査）
 const SDK_VERSION = '12.19.0';
 const SHELL_CACHE = 'won-shell-' + CACHE_VERSION;
@@ -9,7 +9,7 @@ const SDK_CACHE = 'won-sdk-' + SDK_VERSION;       // バージョン固定URL＝
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/main.js', 'js/calc.js', 'js/store.js', 'js/defaults.js', 'js/timer.js', 'js/state.js', 'js/ui.js',
-  'js/firebase-config.js', 'js/auth.js', 'js/store-firebase.js', 'js/migrate.js', 'js/cloud.js', 'js/photo.js', 'js/photo-layout.js',
+  'js/firebase-config.js', 'js/auth.js', 'js/store-firebase.js', 'js/migrate.js', 'js/cloud.js', 'js/photo.js', 'js/photo-layout.js', 'js/photo-themes.js',
   'js/screens/home.js', 'js/screens/pick.js', 'js/screens/entry.js', 'js/screens/history.js', 'js/screens/analysis.js',
   'js/screens/body.js', 'js/screens/settings.js', 'js/screens/master.js', 'js/screens/sheets.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/favicon.ico', 'icons/favicon-32.png',
