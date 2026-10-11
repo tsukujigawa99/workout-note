@@ -13,7 +13,7 @@ import { THEMES, STYLES, FONT_B, px } from './photo-themes.js';
 const MAX_EDGE = 1600;                 // 出力の長辺（これより大きい写真は縮小。拡大はしない）
 const FONT_WAIT_MS = 5000;             // Web フォントを待つ上限（初回は和文サブセットのダウンロードがあるため長め）
 // 記録写真用の追加フォント（起動時には読み込まず、シートを初めて開いた時に 1 回だけ <link> を追加する）
-const FONTS_URL = 'https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Yomogi&family=Cormorant+Garamond:wght@500;600&family=Noto+Serif+JP:wght@500&family=Great+Vibes&family=Permanent+Marker&family=Oswald:wght@700&display=swap';
+const FONTS_URL = 'https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Yomogi&family=Cormorant+Garamond:wght@500;600&family=Noto+Serif+JP:wght@500&family=Oswald:wght@700&display=swap';
 const PREF_KEY = 'won-photo';          // { theme, pos } を端末に記憶（同期しない）
 const IMG_EXT = /\.(jpe?g|png|webp|heic|heif)$/i;
 const DECODE_ERR = 'この写真は読み込めませんでした。JPEG か PNG の写真をお試しください';

@@ -11,8 +11,6 @@ const MARU = '"Zen Maru Gothic","Hiragino Maru Gothic ProN","Noto Sans JP","Meir
 const YOMO = '"Yomogi","Zen Maru Gothic","Noto Sans JP","Meiryo",sans-serif';
 const CORM = '"Cormorant Garamond","Times New Roman",Georgia,serif';
 const MIN = '"Noto Serif JP","Hiragino Mincho ProN","Yu Mincho","MS Mincho",serif';
-const VIBES = '"Great Vibes","Brush Script MT","Segoe Script",cursive';
-const MARKER = '"Permanent Marker","Impact","Arial Black",sans-serif';
 
 /** ノーマルの白／黒カード */
 export const STYLES = {
@@ -49,11 +47,6 @@ function spaced(ctx, s, x, y, sp, align) {
   return total;
 }
 function spacedW(ctx, s, sp) { const chars = Array.from(s); return chars.reduce((a, c) => a + ctx.measureText(c).width, 0) + sp * Math.max(0, chars.length - 1); }
-/** 複数行の文字列（配列）を lh 間隔で描く */
-function lines(ctx, arr, x, y, lh) { arr.forEach((t, i) => ctx.fillText(t, x, y + lh * i)); }
-const maxW = (ctx, arr) => arr.reduce((a, t) => Math.max(a, ctx.measureText(t).width), 0);
-/** 角を中心に rad 回転して fn() を描く */
-function rotated(ctx, x, y, rad, fn) { ctx.save(); ctx.translate(x, y); ctx.rotate(rad); fn(); ctx.restore(); }
 /** 反転後の曜日表記: text.sub '(木) 今日' → { wd:'木', today:true } */
 const subOf = text => { const mt = /\((.)\)/.exec(text.sub || ''); return { wd: mt ? mt[1] : '', today: /今日/.test(text.sub || '') }; };
 /** 見出しが幅 P に収まらない時の縮小率 */
@@ -106,11 +99,6 @@ function dumbbell(ctx, x, y, w, color) {
   });
   ctx.restore();
 }
-function checkbox(ctx, x, y, s, color) {
-  ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = Math.max(1, s * 0.1); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  rotated(ctx, x, y, -4 * DEG, () => { ctx.strokeRect(0, -s, s, s); ctx.beginPath(); ctx.moveTo(s * 0.2, -s * 0.5); ctx.lineTo(s * 0.45, -s * 0.2); ctx.lineTo(s * 1.0, -s * 1.05); ctx.stroke(); });
-  ctx.restore();
-}
 /** 手書き風マーカー線（少し傾き） */
 function marker(ctx, x, y, w, t, color, tilt) {
   ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = t; ctx.lineCap = 'round';
@@ -126,8 +114,6 @@ function decoX(g, f, off) {
   const dw = g.x0 - 2 * g.m;                               // 飾り側の幅（左右対称）
   return g.pos === 'right' ? g.m + dw * f + (off || 0) : g.W - g.m - dw * f - (off || 0);
 }
-const decoAlign = g => (g.pos === 'right' ? 'left' : 'right');
-const mirror = g => (g.pos === 'right' ? 1 : -1);          // 飾り側の向き（右パネル = 飾りは左 = +1）
 
 /* ---------- セット行の共通描画（番号／重量 右揃え／×／reps／補助） ---------- */
 function setRows(ctx, it, inL, ay, rowH, s, o) {
@@ -198,7 +184,6 @@ function hand(ctx, t, x, y, color, bold, outline, ow) {
   if (bold) { ctx.strokeStyle = color; ctx.lineWidth = bold; ctx.strokeText(t, x, y); }
   ctx.restore();
 }
-const outlined = (ctx, t, x, y, stroke, w) => hand(ctx, t, x, y, ctx.fillStyle, w * 0.2, stroke, w);
 /** 手書きの日付: 1 文字ずつ描き、'.' の送り幅を measureText の 45% に詰める（Yomogi のピリオドは右の空きが広いため）。縁取り→本体の 2 パス */
 const DOT_ADV = 0.45;
 const tightW = (ctx, t) => Array.from(t).reduce((a, c) => a + ctx.measureText(c).width * (c === '.' ? DOT_ADV : 1), 0);
@@ -210,26 +195,13 @@ function tightHand(ctx, t, x, y, color, bold, outline, ow) {
   ctx.fillStyle = color; pass(true, color, bold);
   ctx.restore();
 }
-/** 角丸ラベル（少し傾き）の上に複数行。戻り値 { w, h } */
-function label(ctx, g, x, top, arr, font, lh, padX, padY, bg, ink, align, tilt, extraW) {
-  const u = g.u;
-  ctx.font = font;
-  const w = maxW(ctx, arr) + padX * 2 + (extraW || 0), h = lh * arr.length + padY * 2 - lh * 0.25;
-  const lx = align === 'right' ? x - w : x;
-  rotated(ctx, lx, top, tilt * DEG, () => {
-    ctx.fillStyle = bg; rrect(ctx, 0, 0, w, h, 14 * u); ctx.fill();
-    ctx.fillStyle = ink; ctx.textAlign = 'left'; ctx.font = font;
-    arr.forEach((t, i) => hand(ctx, t, padX, padY + lh * 0.72 + lh * i, ink, u * 0.8));
-  });
-  return { w, h };
-}
 const cute = {
   label: 'かわいい',
   fonts: [['700 26px "Zen Maru Gothic"', 'ja'], ['500 26px "Zen Maru Gothic"', 'num'], ['500 18px "Zen Maru Gothic"', 'num'], ['500 26px "Zen Maru Gothic"', 'ja'],
-    ['400 60px Yomogi', 'num'], ['400 34px Yomogi', 'ja'], ['400 30px Yomogi', 'ja'], ['400 22px Yomogi', 'ja'], ['400 40px Yomogi', 'ja'], ['400 28px Yomogi', 'num'], ['500 22px "Noto Sans JP"', 'ja']],
-  sample: { num: 'BetterMe GoodWorkout 2026.10.08', ja: '今日もがんばった継続は最強また明日もがんばろう水をのむたんぱく質とるゆっくり寝るパンプ最高♡効いた!!最後までやりきった!（木）今日' },
+    ['400 60px Yomogi', 'num'], ['400 34px Yomogi', 'ja'], ['400 22px Yomogi', 'ja'], ['400 20px Yomogi', 'num'], ['500 22px "Noto Sans JP"', 'ja']],
+  sample: { num: 'GoodWorkout 2026.10.08', ja: 'がんばった!!パンプ最高♡効いた!!最後までやりきった!（木）今日' },
   headerH: u => 106 * u,                 // 60（日付）+ 10（マーカー）+ 36
-  bottomReserve: H => 0.16 * H,
+  bottomReserve: () => 0,
   others: { ink: NAVY, shadow: 'rgba(255,255,255,.9)', outline: 'rgba(255,255,255,.9)' },
   drawBackdrop(ctx, g) { ctx.fillStyle = 'rgba(255,255,255,.08)'; ctx.fillRect(0, 0, g.W, g.H); },
   drawHeader(ctx, g) {
@@ -298,49 +270,12 @@ const cute = {
       }
     }
   },
+  // v1.3.1: 定型の飾り文字は削除。ハートときらめきだけを飾り側に散らす
   drawDecor(ctx, g) {
-    const { W, H, u, m, x0, P, headTop } = g, al = decoAlign(g), d = mirror(g);
-    ctx.save(); ctx.textAlign = 'left';
-    // 上: 今日も がんばった ☺（白ラベル）
-    const lx = decoX(g, 0, 6 * u), top1 = Math.max(16 * u, headTop - 36 * u);
-    const r1 = label(ctx, g, lx, top1, ['今日も', 'がんばった'], px(30 * u, YOMO), 38 * u, 16 * u, 10 * u, 'rgba(255,255,255,.85)', NAVY, al, -3 * d, 34 * u);
-    rotated(ctx, al === 'right' ? lx - r1.w : lx, top1, -3 * d * DEG, () => { smile(ctx, r1.w - 24 * u, r1.h - 24 * u, 12 * u, NAVY); star4(ctx, r1.w + 10 * u, 2 * u, 6 * u, NAVY); });
-    // ハート・きらめき（飾り側、パネル寄り）
+    const { H, u } = g;
+    ctx.save();
     heart(ctx, decoX(g, 0.72), 0.19 * H, 14 * u, PINK); heart(ctx, decoX(g, 0.82), 0.225 * H, 9 * u, PINK);
     star4(ctx, decoX(g, 0.9), 0.31 * H, 8 * u, '#FFFFFF'); star4(ctx, decoX(g, 0.96), 0.48 * H, 10 * u, '#FFFFFF'); star4(ctx, decoX(g, 0.9), 0.53 * H, 6 * u, '#FFFFFF');
-    // 中ほど: Better Me♡（上と同じ白ラベルの上に濃紺。明るい壁の上でも読めるように）
-    const bx = decoX(g, 0, 6 * u), btop = 0.4 * H - 30 * u;
-    const r2 = label(ctx, g, bx, btop, ['Better', 'Me'], px(28 * u, YOMO), 34 * u, 16 * u, 10 * u, 'rgba(255,255,255,.85)', NAVY, al, -3 * d, 22 * u);
-    rotated(ctx, al === 'right' ? bx - r2.w : bx, btop, -3 * d * DEG, () => {
-      ctx.font = px(28 * u, YOMO); const mw = ctx.measureText('Me').width;
-      heart(ctx, 16 * u + mw + 14 * u, r2.h - 10 * u - 24 * u, 8 * u, PINK);
-      marker(ctx, 12 * u, r2.h - 8 * u, mw + 50 * u, 5 * u, 'rgba(255,150,180,.7)', -2);
-    });
-    // 下: 水色ラベルのチェックリスト
-    const list = ['水をのむ', 'たんぱく質とる', 'ゆっくり寝る'], lh = 36 * u, padX = 18 * u + 30 * u, padY = 14 * u;
-    ctx.font = px(22 * u, YOMO);
-    const lw = maxW(ctx, list) + padX + 18 * u + 30 * u, lhgt = lh * list.length + padY * 2 - lh * 0.25;
-    const ltop = H - m - lhgt - 6 * u, llx = decoX(g, 0, 4 * u);
-    rotated(ctx, al === 'right' ? llx - lw : llx, ltop, -2 * d * DEG, () => {
-      ctx.fillStyle = 'rgba(214,232,255,.9)'; rrect(ctx, 0, 0, lw, lhgt, 14 * u); ctx.fill();
-      ctx.fillStyle = NAVY; ctx.textAlign = 'left'; ctx.font = px(22 * u, YOMO);
-      list.forEach((t, i) => { const yy = padY + lh * (i + 0.72); checkbox(ctx, 18 * u, yy, 18 * u, NAVY); hand(ctx, t, padX, yy, NAVY, u * 0.8); });
-      smile(ctx, lw - 26 * u, lhgt - 26 * u, 11 * u, NAVY);
-    });
-    // パネル側の下: 継続は 最強 ＋ 王冠 ／ また明日も がんばろう ☺
-    const ry0 = H - g.bottomReserve;
-    ctx.textAlign = 'left'; ctx.fillStyle = NAVY; ctx.font = px(40 * u, YOMO);
-    const kx = x0 + 30 * u, k1 = ry0 + 56 * u, k2 = k1 + 50 * u;
-    outlined(ctx, '継続は', kx, k1, 'rgba(255,255,255,.95)', 6 * u); outlined(ctx, '最強', kx + 16 * u, k2, 'rgba(255,255,255,.95)', 6 * u);
-    crown(ctx, kx + 16 * u + ctx.measureText('最強').width + 10 * u, k2 - 24 * u, 30 * u, YELLOW);
-    star4(ctx, kx + ctx.measureText('継続は').width + 16 * u, k1 - 30 * u, 7 * u, NAVY);
-    ctx.font = px(22 * u, YOMO);
-    const left = g.pos === 'left', a1 = H - m - 34 * u, a2 = a1 + 28 * u;
-    ctx.textAlign = left ? 'left' : 'right';
-    const ax = left ? x0 + 30 * u : x0 + P - 46 * u, aw = ctx.measureText('また明日も').width;
-    outlined(ctx, 'また明日も', ax, a1, 'rgba(255,255,255,.95)', 4 * u); outlined(ctx, 'がんばろう', ax, a2, 'rgba(255,255,255,.95)', 4 * u);
-    smile(ctx, left ? ax + aw + 18 * u : ax + 22 * u, a2 - 8 * u, 11 * u, NAVY);
-    heart(ctx, Math.min(W - m - 6 * u, x0 + P - 8 * u), ry0 + 20 * u, 8 * u, PINK);
     ctx.restore();
   },
 };
@@ -350,11 +285,11 @@ const W80 = 'rgba(255,255,255,.8)', W85 = 'rgba(255,255,255,.85)';
 const chic = {
   label: 'おしゃれ',
   fonts: [['500 22px "Cormorant Garamond"', 'num'], ['600 96px "Cormorant Garamond"', 'num'], ['500 20px "Cormorant Garamond"', 'num'],
-    ['500 28px "Noto Serif JP"', 'ja'], ['500 24px "Noto Serif JP"', 'ja'], ['500 22px "Noto Serif JP"', 'ja'],
-    ['400 56px "Great Vibes"', 'num'], ['400 64px "Great Vibes"', 'num'], ['400 24px "Noto Sans JP"', 'num'], ['400 18px "Noto Sans JP"', 'ja'], ['500 22px "Noto Sans JP"', 'ja']],
-  sample: { num: 'WORKOUT LOG SMALL STEPS BIG CHANGES Better Than Yesterday Keep Training 01234567890/', ja: '今日の積み重ねが、明日の自分をつくる。（木）今日' },
+    ['500 28px "Noto Serif JP"', 'ja'], ['500 24px "Noto Serif JP"', 'ja'],
+    ['400 24px "Noto Sans JP"', 'num'], ['400 18px "Noto Sans JP"', 'ja'], ['500 22px "Noto Sans JP"', 'ja']],
+  sample: { num: 'WORKOUT LOG 01234567890/', ja: '（木）今日' },
   headerH: u => 242 * u,                 // 18（WORKOUT LOG）+ 100（日付）+ 24（線）+ 40（曜日）+ 60
-  bottomReserve: H => 0.17 * H,
+  bottomReserve: () => 0,
   others: { ink: '#FFFFFF', shadow: 'rgba(0,0,0,.55)' },
   drawBackdrop(ctx, g) {
     const { W, H, x0, P, pos } = g;
@@ -393,34 +328,17 @@ const chic = {
     ctx.fillText(clip(ctx, it.name, inR - rmW - 12 * s - nx), nx, by);
     setRows(ctx, it, inL, y + pad + headH, rowH, s, { font: '400 ' + px(24 * s, FONT_B), xFont: '400 ' + px(22 * s, FONT_D), assistFont: '400 ' + px(18 * s, FONT_B), ink: '#FFFFFF', ink2: 'rgba(255,255,255,.7)' });
   },
-  drawDecor(ctx, g) {
-    const { H, u, m, x0, P, headTop } = g, al = decoAlign(g), d = mirror(g);
-    ctx.save();
-    // 飾り側の上: Better Than Yesterday（筆記体、少し右上がり）
-    ctx.fillStyle = '#FFFFFF'; ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 6 * u; ctx.shadowOffsetY = 2 * u;
-    const tx = decoX(g, 0, 12 * u), ty = Math.max(70 * u, headTop - 10 * u);
-    rotated(ctx, tx, ty, -6 * d * DEG, () => { ctx.font = px(56 * u, VIBES); ctx.textAlign = al; lines(ctx, ['Better', 'Than', 'Yesterday'], 0, 0, 58 * u); });
-    // 飾り側の下: SMALL STEPS BIG CHANGES（1 行ずつ、字間）
-    ctx.fillStyle = W85; ctx.font = '500 ' + px(22 * u, CORM);
-    ['SMALL', 'STEPS', 'BIG', 'CHANGES'].forEach((t, i) => spaced(ctx, t, decoX(g, 0, 4 * u), H - m - 8 * u - 30 * u * (3 - i), 0.3 * 22 * u, al));
-    // パネル側の下: Keep Training（筆記体）＋ 和文 2 行（パネル右端揃え）
-    const pr = al === 'left' ? x0 + P : x0, pal = al === 'left' ? 'right' : 'left';
-    ctx.fillStyle = '#FFFFFF'; ctx.font = '500 ' + px(22 * u, MIN); ctx.textAlign = pal;
-    const j2 = H - m - 8 * u, j1 = j2 - 32 * u;
-    ctx.fillText('今日の積み重ねが、', pr, j1); ctx.fillText('明日の自分をつくる。', pr, j2);
-    rotated(ctx, pr, j1 - 48 * u, -4 * d * DEG, () => { ctx.font = px(64 * u, VIBES); ctx.textAlign = pal; ctx.fillText('Training', 0, 0); ctx.fillText('Keep', pal === 'right' ? -ctx.measureText('Training').width + 30 * u : 0, -60 * u); });
-    ctx.restore();
-  },
+  drawDecor() { /* 飾りなし（v1.3.1 で定型の飾り文字を削除） */ },
 };
 
 /* ================= cool（かっこいい） ================= */
 const cool = {
   label: 'かっこいい',
   fonts: [['700 92px Oswald', 'num'], ['400 18px Oswald', 'num'], ['500 18px Oswald', 'num'], ['400 26px Oswald', 'num'], ['400 20px Oswald', 'num'],
-    ['700 26px "Noto Sans JP"', 'ja'], ['500 26px "Noto Sans JP"', 'ja'], ['400 18px "Noto Sans JP"', 'ja'], ['500 22px "Noto Sans JP"', 'ja'], ['400 84px "Permanent Marker"', 'num']],
-  sample: { num: 'NO PAIN GAIN TRAINING RECORD BETTER THAN YESTERDAY Keep Going', ja: '' },
+    ['700 26px "Noto Sans JP"', 'ja'], ['500 26px "Noto Sans JP"', 'ja'], ['400 18px "Noto Sans JP"', 'ja'], ['500 22px "Noto Sans JP"', 'ja']],
+  sample: { num: 'TRAINING RECORD', ja: '' },
   headerH: u => 186 * u,                 // 92（日付）+ 44（TRAINING RECORD）+ 50
-  bottomReserve: H => 0.18 * H,
+  bottomReserve: () => 0,
   others: { ink: '#FFFFFF', shadow: 'rgba(0,0,0,.55)' },
   drawBackdrop(ctx, g) {
     const { W, H, u, x0, P, pos } = g;
@@ -483,25 +401,7 @@ const cool = {
     ctx.fillText(clip(ctx, it.name, inR - pw - 10 * s - nx), nx, by);
     setRows(ctx, it, inL, y + pad + headH, rowH, s, { font: '400 ' + px(26 * s, FONT_D), assistFont: '400 ' + px(18 * s, FONT_B), ink: '#FFFFFF', ink2: 'rgba(255,255,255,.7)', kg: 'kg' });
   },
-  drawDecor(ctx, g) {
-    const { H, u, m, x0, P } = g, al = decoAlign(g), d = mirror(g);
-    ctx.save();
-    // 飾り側の上: NO PAIN / NO GAIN
-    ctx.fillStyle = W80; ctx.font = '400 ' + px(20 * u, FONT_D);
-    spaced(ctx, 'NO PAIN', decoX(g, 0, 10 * u), m + 36 * u, 0.3 * 20 * u, al); spaced(ctx, 'NO GAIN', decoX(g, 0, 10 * u), m + 66 * u, 0.3 * 20 * u, al);
-    ctx.fillRect(al === 'left' ? decoX(g, 0, 10 * u) : decoX(g, 0, 10 * u) - 22 * u, m + 82 * u, 22 * u, Math.max(1, u));
-    // 飾り側の下: Keep Going（ブラシ文字、−8° 回転、影）
-    ctx.fillStyle = '#FFFFFF'; ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 14 * u; ctx.shadowOffsetY = 4 * u;
-    rotated(ctx, decoX(g, 0, 10 * u), H - m - 30 * u, -8 * d * DEG, () => { ctx.font = px(84 * u, MARKER); ctx.textAlign = al; ctx.fillText('Going', 0, 0); ctx.fillText('Keep', al === 'left' ? 0 : -ctx.measureText('Going').width * 0.3, -92 * u); });
-    ctx.shadowColor = 'transparent';
-    // パネル側の下: BETTER THAN YESTERDAY（両脇に線）
-    ctx.fillStyle = W85; ctx.font = '400 ' + px(18 * u, FONT_D);
-    const t = 'BETTER THAN YESTERDAY', sp = 0.3 * 18 * u, tw = spacedW(ctx, t, sp), cx = x0 + P / 2, by = H - m - 24 * u;
-    spaced(ctx, t, cx, by, sp, 'center');
-    const ll = Math.min(60 * u, (P - tw) / 2 - 16 * u);
-    if (ll > 8 * u) { ctx.fillRect(cx - tw / 2 - 12 * u - ll, by - 6 * u, ll, Math.max(1, u)); ctx.fillRect(cx + tw / 2 + 12 * u, by - 6 * u, ll, Math.max(1, u)); }
-    ctx.restore();
-  },
+  drawDecor() { /* 飾りなし（v1.3.1 で定型の飾り文字を削除） */ },
 };
 
 export const THEMES = { normal, cute, chic, cool };

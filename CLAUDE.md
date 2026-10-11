@@ -7,7 +7,7 @@
 - 公開URL: https://tsukujigawa99.github.io/workout-note/ （main へ push → GitHub Actions が `app/` を Pages へ自動デプロイ、1〜2分）
 - リポジトリ: https://github.com/tsukujigawa99/workout-note
 - Firebase プロジェクト: `workout-note-b45cd`（Firestore 東京、Google ログイン）。接続情報は `app/js/firebase-config.js`（公開値）。
-- 現行版: v1.3.0（2026-10-10、記録写真のデザイン 4 種）。自動テスト `tests/test.html` 165件 PASS。
+- 現行版: v1.3.1（2026-10-11、記録写真のデザイン 4 種。定型の飾り文字は依頼者の指示で削除済み）。自動テスト `tests/test.html` 166件 PASS。
 
 ## 体制（依頼者指定・必ず維持）
 - PM／窓口 = メイン会話。依頼者とのやり取り、仕様決定、報告。

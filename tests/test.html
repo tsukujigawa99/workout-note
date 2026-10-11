@@ -743,10 +743,10 @@ await test('4 テーマ（normal / cute / chic / cool）があり、ラベルは
   eq(Object.values(TH.THEMES).map(t => t.label), ['ノーマル', 'かわいい', 'おしゃれ', 'かっこいい']);
 });
 await test('各テーマに 6 つの関数がある', () => { Object.entries(TH.THEMES).forEach(([k, t]) => THEME_FNS.forEach(f => ok(typeof t[f] === 'function', k + '.' + f + ' が関数でない'))); });
-await test('headerH(u) は正の数で u に比例、bottomReserve(H) は 0 以上（ノーマルは 0、他は H に比例）', () => {
+await test('headerH(u) は正の数で u に比例、bottomReserve(H) は 4 テーマとも 0（v1.3.1 で下部の飾りを削除）', () => {
   Object.entries(TH.THEMES).forEach(([k, t]) => { ok(t.headerH(1) > 0, k); near(t.headerH(2), t.headerH(1) * 2, k + ' headerH'); ok(t.bottomReserve(1000) >= 0, k); ok(Number.isFinite(t.bottomReserve(1000)), k); });
-  eq(TH.THEMES.normal.headerH(1), 102); eq(TH.THEMES.normal.bottomReserve(1600), 0);
-  near(TH.THEMES.cute.bottomReserve(1000), 160); near(TH.THEMES.chic.bottomReserve(1000), 170); near(TH.THEMES.cool.bottomReserve(1000), 180);
+  eq(TH.THEMES.normal.headerH(1), 102);
+  Object.entries(TH.THEMES).forEach(([k, t]) => { eq(t.bottomReserve(1600), 0, k); eq(t.bottomReserve(1000), 0, k); });
 });
 await test('fonts は空でなく [cssFont, "num"|"ja"] の形', () => {
   Object.entries(TH.THEMES).forEach(([k, t]) => { ok(Array.isArray(t.fonts) && t.fonts.length > 0, k); t.fonts.forEach(a => { ok(/^\d{3} \d+px /.test(a[0]), k + ': ' + a[0]); ok(a[1] === 'num' || a[1] === 'ja', k + ': ' + a[1]); }); });
@@ -756,12 +756,21 @@ await test('bottomReserve を引いた avail でも fitPlan は仕様どおり�
   const r = PL.fitPlan(Array(10).fill(4), avail, u); eq(r.scale, 0.6); ok(r.count > 0 && r.count < 10, 'count=' + r.count); ok(PL.needH(Array(r.count).fill(4), u, 0.6) + PL.OTHERS_H * u <= avail);
   eq(PL.fitPlan([4, 3, 2, 3], avail, u), { scale: 1, count: 4 });
 });
+await test('v1.3.1: 定型の飾り文字と使わなくなったフォントが残っていない（仕様書07 7章）', async () => {
+  const src = await (await fetch('../app/js/photo-themes.js', { cache: 'no-store' })).text();
+  ['今日も', '継続は', '最強', 'また明日も', 'がんばろう', '水をのむ', 'たんぱく質とる', 'ゆっくり寝る',
+    'Better', 'Yesterday', 'SMALL', 'CHANGES', 'Keep', 'NO PAIN', 'NO GAIN', 'Great Vibes', 'Permanent Marker']
+    .forEach(t => ok(!src.includes(t), t + ' が photo-themes.js に残っている'));
+  const photo = await (await fetch('../app/js/photo.js', { cache: 'no-store' })).text();
+  ['Great+Vibes', 'Permanent+Marker'].forEach(t => ok(!photo.includes(t), t + ' が photo.js の Fonts URL に残っている'));
+  ['Zen+Maru+Gothic', 'Yomogi', 'Cormorant+Garamond', 'Noto+Serif+JP', 'Oswald'].forEach(t => ok(photo.includes(t), t + ' が photo.js の Fonts URL に無い'));
+});
 
 group('Firebase: 設定・SW・ルールの整合');
 await test('firebaseConfig と SDK の URL', () => { eq(CFG.firebaseConfig.projectId, 'workout-note-b45cd'); eq(CFG.firebaseConfig.authDomain, 'workout-note-b45cd.firebaseapp.com'); ok(/^\d+\.\d+\.\d+$/.test(CFG.SDK_VERSION)); eq(CFG.SDK_BASE, 'https://www.gstatic.com/firebasejs/' + CFG.SDK_VERSION + '/'); eq(CFG.SDK_FILES, ['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js']); });
 await test('sw.js: SDK バージョンが一致し、新規ファイルがアプリシェルに入っている／API・認証の通信には触らない', async () => {
   const sw = await (await fetch('../app/sw.js', { cache: 'no-store' })).text();
-  eq(sw.match(/const SDK_VERSION = '([^']+)'/)[1], CFG.SDK_VERSION); eq(sw.match(/const CACHE_VERSION = '([^']+)'/)[1], 'v' + D.APP_VERSION); eq(D.APP_VERSION, '1.3.0');
+  eq(sw.match(/const SDK_VERSION = '([^']+)'/)[1], CFG.SDK_VERSION); eq(sw.match(/const CACHE_VERSION = '([^']+)'/)[1], 'v' + D.APP_VERSION); eq(D.APP_VERSION, '1.3.1');
   ['js/firebase-config.js', 'js/auth.js', 'js/store-firebase.js', 'js/migrate.js', 'js/cloud.js', 'js/photo.js', 'js/photo-layout.js', 'js/photo-themes.js'].forEach(f => ok(sw.includes("'" + f + "'"), f + ' が SHELL に無い'));
   const code = sw.split('\n').filter(l => !l.trim().startsWith('//')).join('\n'); ['firestore.googleapis.com', 'identitytoolkit', 'securetoken', 'apis.google.com', 'firebaseapp.com'].forEach(h => ok(!code.includes(h), h + ' を SW のコードで扱っている'));
 });
