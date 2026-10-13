@@ -22,11 +22,12 @@ import * as photo from './photo.js';
 const SCREENS = { home, pick, entry, history: historyScr, analysis, body, settings, master };
 const TAB_SCREENS = ['home', 'analysis', 'body', 'settings'];
 const TABS = [['home', 'home', 'ホーム'], ['analysis', 'chart', '履歴/分析'], ['body', 'body', '体組成'], ['settings', 'set', '設定']];
-const SKIN_KEY = 'won-skin', THEME_COLOR = { red: '#D23B38', black: '#151213' };
+const SKIN_KEY = 'won-skin', THEME_COLOR = { red: '#0B0F17', blue: '#0B0F17' };
 
 /* ---------- テーマ（端末ごと。同期対象外） ---------- */
 let skin = 'red';
-try { skin = localStorage.getItem(SKIN_KEY) === 'black' ? 'black' : 'red'; } catch (e) { /* noop */ }
+// 保存値 'black'（v1 の黒テーマ）は 'blue' として読む（既存ユーザーの設定を壊さない）
+try { const v = localStorage.getItem(SKIN_KEY); skin = v === 'blue' || v === 'black' ? 'blue' : 'red'; } catch (e) { /* noop */ }
 function applySkin() {
   document.documentElement.dataset.skin = skin;
   const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', THEME_COLOR[skin]);
@@ -87,7 +88,7 @@ const ACTIONS = {
   migrateNow() { cloud.migrateNow(); },
   reconnect() { cloud.reconnect(); },
   skin() {
-    skin = skin === 'red' ? 'black' : 'red'; applySkin();
+    skin = skin === 'red' ? 'blue' : 'red'; applySkin();
     try { localStorage.setItem(SKIN_KEY, skin); } catch (e) { /* 保存できなくても切替自体は有効 */ }
     if (S.route.name === 'settings') render(true);
   },

@@ -135,6 +135,30 @@ await test('MONTHLY ARCHIVE = 表示月の実施日数（有効セットのあ�
 await test('monthDays: 1月と11月を取り違えない', () => { const d = { '2026-01-05': one(1), '2026-11-05': one(1), '2026-10-05': one(1) }; eq(C.monthDays(d, 2026, 0), 1); eq(C.monthDays(d, 2026, 10), 1); });
 await test('inRange: range日前は含む、0 は全期間', () => { ok(C.inRange(C.addDaysKey(T, -30), T, 30)); ok(!C.inRange(C.addDaysKey(T, -31), T, 30)); ok(C.inRange('2001-01-01', T, 0)); });
 
+/* ================= v2.0.0: ホームの連続記録・28日ブロック・リング（仕様書08 5章） ================= */
+group('calc: v2.0.0 連続記録・28日ブロック・リングゲージ（仕様書08）');
+await test('streak: 今日に記録あり → 今日から過去へ連続する日数', () => {
+  const d = { [T]: one(1), [C.addDaysKey(T, -1)]: one(1), [C.addDaysKey(T, -2)]: one(1), [C.addDaysKey(T, -4)]: one(1) };
+  eq(C.streak(d, T), 3);
+});
+await test('streak: 今日は記録なし・昨日あり → 昨日から数える', () => {
+  const d = { [C.addDaysKey(T, -1)]: one(1), [C.addDaysKey(T, -2)]: one(1), [C.addDaysKey(T, -3)]: { memo: 'メモだけ', items: [] } };
+  eq(C.streak(d, T), 2);
+});
+await test('streak: 今日も昨日も記録なし → 0（一昨日にあっても数えない）、空 → 0、未来の日は無関係', () => {
+  eq(C.streak({ [C.addDaysKey(T, -2)]: one(1) }, T), 0); eq(C.streak({}, T), 0); eq(C.streak({ [C.addDaysKey(T, 1)]: one(1) }, T), 0);
+  eq(C.streak({ [T]: dayOf({ ex: 'a', sets: [set(10, 0)] }), [C.addDaysKey(T, -1)]: one(1) }, T), 1);   // 今日は無効セットのみ＝記録なし扱い
+});
+await test('monthlyBlocks: 4 要素（古い順）で、合計が 28 日間の負荷量と一致する', () => {
+  const b = C.monthlyBlocks(days, T);
+  eq(b.length, 4); eq(b, [1000, 0, 100, 11]); eq(b.reduce((a, v) => a + v, 0), C.rangeVol(days, T, 0, 27));
+  eq(C.monthlyBlocks({}, T), [0, 0, 0, 0]);
+});
+await test('ringRatio: 0→0、175,000→0.5、350,000→0、735,000→0.1（旅客機 1 機ごとに一周）', () => {
+  eq(C.ringRatio(0), 0); near(C.ringRatio(175000), 0.5); eq(C.ringRatio(350000), 0); near(C.ringRatio(700000 + 35000), 0.1);
+  ok(C.ringRatio(349999) < 1 && C.ringRatio(349999) > 0.99); eq(C.ringRatio(undefined), 0); eq(C.ringRatio(-5), 0);
+});
+
 group('calc: 履歴・コピー');
 const hdays = {
   '2026-09-10': dayOf({ ex: 'bp', sets: [set(70, 10)] }, { ex: 'sq', sets: [set(90, 5)] }),
@@ -770,7 +794,7 @@ group('Firebase: 設定・SW・ルールの整合');
 await test('firebaseConfig と SDK の URL', () => { eq(CFG.firebaseConfig.projectId, 'workout-note-b45cd'); eq(CFG.firebaseConfig.authDomain, 'workout-note-b45cd.firebaseapp.com'); ok(/^\d+\.\d+\.\d+$/.test(CFG.SDK_VERSION)); eq(CFG.SDK_BASE, 'https://www.gstatic.com/firebasejs/' + CFG.SDK_VERSION + '/'); eq(CFG.SDK_FILES, ['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js']); });
 await test('sw.js: SDK バージョンが一致し、新規ファイルがアプリシェルに入っている／API・認証の通信には触らない', async () => {
   const sw = await (await fetch('../app/sw.js', { cache: 'no-store' })).text();
-  eq(sw.match(/const SDK_VERSION = '([^']+)'/)[1], CFG.SDK_VERSION); eq(sw.match(/const CACHE_VERSION = '([^']+)'/)[1], 'v' + D.APP_VERSION); eq(D.APP_VERSION, '1.3.1');
+  eq(sw.match(/const SDK_VERSION = '([^']+)'/)[1], CFG.SDK_VERSION); eq(sw.match(/const CACHE_VERSION = '([^']+)'/)[1], 'v' + D.APP_VERSION); eq(D.APP_VERSION, '2.0.0');
   ['js/firebase-config.js', 'js/auth.js', 'js/store-firebase.js', 'js/migrate.js', 'js/cloud.js', 'js/photo.js', 'js/photo-layout.js', 'js/photo-themes.js'].forEach(f => ok(sw.includes("'" + f + "'"), f + ' が SHELL に無い'));
   const code = sw.split('\n').filter(l => !l.trim().startsWith('//')).join('\n'); ['firestore.googleapis.com', 'identitytoolkit', 'securetoken', 'apis.google.com', 'firebaseapp.com'].forEach(h => ok(!code.includes(h), h + ' を SW のコードで扱っている'));
 });

@@ -95,6 +95,16 @@ export const monthDays = (days, y, m) => { const p = monthPrefix(y, m) + '-'; re
 export const totalDays = days => Object.keys(days).filter(k => isTrained(days[k])).length;
 export const VEHICLES = { car: 1500, bus: 15000, plane: 350000 };
 export const vehicles = (kg, unitKg) => f1(kg / unitKg);
+/** 連続トレーニング日数: 今日が記録ありなら今日から、無ければ昨日から過去へ向かって isTrained が続く日数（昨日も無ければ 0） */
+export function streak(days, tKey) {
+  let k = isTrained(days[tKey]) ? tKey : addDaysKey(tKey, -1), n = 0;
+  while (isTrained(days[k])) { n++; k = addDaysKey(k, -1); }
+  return n;
+}
+/** 28 日間を 7 日ずつ 4 ブロックにした負荷量（古い順。末尾＝直近 7 日） */
+export const monthlyBlocks = (days, tKey) => [3, 2, 1, 0].map(i => rangeVol(days, tKey, i * 7, i * 7 + 6));
+/** リングゲージの塗り割合: 次の旅客機 1 機（350,000kg）までの進み具合（0 以上 1 未満） */
+export function ringRatio(kg) { const r = ((Number(kg) || 0) / VEHICLES.plane) % 1; return r > 0 ? r : 0; }
 /** range 日前以降か（range=0 は全期間） */
 export const inRange = (k, tKey, range) => !range || k >= addDaysKey(tKey, -range);
 

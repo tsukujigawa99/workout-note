@@ -8,13 +8,13 @@ import { $, esc, ic, bar, toast } from '../ui.js';
 import { APP_NAME, APP_VERSION, STEP_CHOICES, TIMER_PRESETS } from '../defaults.js';
 import { sheet, closeSheet, promptSheet } from './sheets.js';
 
-const skin = () => document.documentElement.dataset.skin === 'black' ? 'black' : 'red';
+const skin = () => document.documentElement.dataset.skin === 'blue' ? 'blue' : 'red';
 
 function render() {
   const s = store.settings();
   const r = (t, sub, v, act) => '<button class="row" data-act="' + act + '"><span class="t"><b>' + esc(t) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span><span class="r">' + esc(v || '') + '</span>' + ic('next') + '</button>';
   return bar('設定', '', '', false) + '<div class="pad">'
-    + '<div class="sect">表示</div><div class="list">' + r('テーマ', 'ホーム右上のボタンでも切り替えできます', skin() === 'red' ? '赤' : '黒', 'skin') + '</div>'
+    + '<div class="sect">表示</div><div class="list">' + r('テーマ', 'ホーム右上のボタンでも切り替えできます', skin() === 'red' ? '赤' : 'ブルー', 'skin') + '</div>'
     + '<div class="sect">記録</div><div class="list">' + r('部位・種目の管理', '追加・名称変更・並び替え・非表示', '', 'openMaster') + r('重量の増減ステップ', '＋／−ボタン1回あたり', s.step + ' kg', 'setStep') + r('インターバルの初期値', 'タイマーの秒数', s.timerSec + ' 秒', 'setTimerSec') + '</div>'
     + account()
     + '<div class="sect">このアプリについて</div><div class="list"><div class="row"><span class="t"><b>' + esc(APP_NAME) + '</b><small>' + (cloud && cloud.state().user ? '記録はクラウドに同期されます' : '記録はこの端末の中に保存されます') + '</small></span><span class="r">v' + esc(APP_VERSION) + '</span></div></div></div>';

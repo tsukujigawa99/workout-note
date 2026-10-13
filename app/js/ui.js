@@ -18,6 +18,13 @@ const IC = {
   bell: 'M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12', next: 'M9 5l7 7-7 7', trash: 'M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13', x: 'M6 6l12 12M18 6L6 18',
   up: 'M6 15l6-6 6 6', down: 'M6 9l6 6 6-6', edit: 'M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4',
   camera: 'M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 100-8 4 4 0 000 8z',
+  // v2.0.0 ホーム用（24px 線画）
+  flame: 'M12 3c.6 3.4 4.5 5 4.5 9.5a4.5 4.5 0 01-9 0c0-1.9.8-3.3 1.8-4.4.4 1.4 1.3 2.2 2.4 2.6C12.2 9 11.6 6 12 3z',
+  doc: 'M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6',
+  cal: 'M4 6h16v15H4zM4 10h16M8 3v4M16 3v4',
+  pencil: 'M3 21l4-1L19 8l-3-3L4 17zM14 7l3 3',
+  sigma: 'M18 5H6l6 7-6 7h12',
+  ring: 'M12 3a9 9 0 109 9',
 };
 export const ic = n => n === 'skin'
   ? '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18z" fill="currentColor"/></svg>'

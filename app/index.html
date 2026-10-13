@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>WorkOut Note</title>
 <meta name="description" content="広告なし・自分専用の筋トレ記録ノート">
-<meta name="theme-color" content="#D23B38">
+<meta name="theme-color" content="#0B0F17">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,7 +21,7 @@
 <link rel="stylesheet" href="css/app.css">
 <script>
 /* テーマを最初の描画前に反映（ちらつき防止） */
-try{if(localStorage.getItem('won-skin')==='black')document.documentElement.dataset.skin='black'}catch(e){}
+try{var s=localStorage.getItem('won-skin');if(s==='blue'||s==='black')document.documentElement.dataset.skin='blue'}catch(e){}
 </script>
 </head>
 <body>
