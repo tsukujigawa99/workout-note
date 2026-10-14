@@ -60,7 +60,8 @@ function render() {
     + '<div class="hring paper"><div class="ch"><span class="chipic ctot">' + ic('bell') + '</span><h2>総合計負荷量</h2><button class="arrbtn" data-act="tab" data-arg="analysis" aria-label="履歴/分析を開く">' + ic('next') + '</button></div>'
     + '<div class="ring"><svg viewBox="0 0 220 220" role="img" aria-label="' + ringLabel + '"><defs><linearGradient id="ringgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--ring-a)"/><stop offset="1" style="stop-color:var(--ring-b)"/></linearGradient></defs>'
     + '<circle class="track" cx="110" cy="110" r="' + RING_R + '"/><circle class="fill" cx="110" cy="110" r="' + RING_R + '" stroke="url(#ringgrad)" stroke-dasharray="' + RING_C.toFixed(2) + '" stroke-dashoffset="' + (RING_C * (1 - ratio)).toFixed(2) + '" transform="rotate(-90 110 110)"/>'
-    + '<text class="v" x="110" y="118">' + ton(vall) + ' t</text><text class="s" x="110" y="146">旅客機 × ' + vehicles(vall, VEHICLES.plane) + '</text></svg></div></div>'
+    // .t はリング内の見出し（380〜479px だけ CSS で表示。それ以外は .ch の h2 が見出し）
+    + '<text class="t" x="110" y="66" aria-hidden="true">総合計負荷量</text><text class="v" x="110" y="118">' + ton(vall) + ' t</text><text class="s" x="110" y="146">旅客機 × ' + vehicles(vall, VEHICLES.plane) + '</text></svg></div></div>'
     // 行 2 左: カレンダー（紙・丸いセル）
     + '<div class="hcal paper"><div class="month"><button data-act="mon" data-arg="-1" aria-label="前の月">‹</button><h2 aria-live="polite">' + y + '年 ' + (m + 1) + '月</h2><button data-act="mon" data-arg="1" aria-label="次の月">›</button></div>'
     + '<div class="dow"><span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span></div><div class="days">' + cells + '</div>'
