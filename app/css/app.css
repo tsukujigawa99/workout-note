@@ -1,5 +1,5 @@
-/* WorkOut Note v2.1.1 — 3 テーマ（サンセット／ゴールド／グリーン。仕様書09）。基準は mock/ref_v3/home_sunset.png / home_gold_green.png
-   v2.1.1: 上部の空に背景写真（--sky-img）＋テーマごとの色の被せ（--sky-overlay）。仕様書09 7章
+/* WorkOut Note v2.1.2 — 3 テーマ（サンセット／ゴールド／グリーン。仕様書09）。基準は mock/ref_v3/home_sunset.png / home_gold_green.png
+   v2.1.1: 上部の空に背景写真（--sky-img）＋テーマごとの色の被せ（--sky-overlay）。仕様書09 7章。v2.1.2: ゴールド／グリーン専用写真
    トークンの考え方: 画面の地 --ground、上部の空 --sky-*、暗い半透明カード --glass-*、紙カード --paper-*、アクセント --accent/--grad、
    カレンダー --cal-*、集計アイコン --chip-*。サブ画面は --surface/--ink/--ink-2/--line（＝--paper-* に割り当て）を参照する */
 :root{
@@ -31,9 +31,9 @@
 :root[data-skin="gold"]{
   --ground:#0E1626; --sky-top:#05080F; --sky-mid:#0C1222; --sky-low:#141B30; --sky-dusk:#101829; --sun:rgba(230,180,80,.45);
   --sky-ink:#FFFFFF; --sky-ink-2:rgba(255,255,255,.72); --sky-btn:rgba(255,255,255,.08); --sky-btn-line:rgba(227,176,75,.5); --logo:#E3B04B;
-  /* 当面サンセットの写真を濃い紺で暗くして使う（bg-gold.jpg が届き次第差し替え） */
-  --sky-img:url(../img/bg-sunset.jpg);
-  --sky-overlay:linear-gradient(180deg,rgba(5,8,15,.74) 0,rgba(5,8,15,.70) 40%,rgba(9,14,26,.86) 68%,rgba(14,22,38,.96) 86%,var(--ground) 100%);
+  /* 専用写真（青い夕暮れ）。被せは薄めの紺で、夕日と街並みが見えるように */
+  --sky-img:url(../img/bg-gold.jpg);
+  --sky-overlay:linear-gradient(180deg,rgba(5,8,15,.45) 0,rgba(5,8,15,.42) 40%,rgba(9,14,26,.72) 68%,rgba(14,22,38,.92) 86%,var(--ground) 100%);
   --sky-text-shadow:0 1px 2px rgba(0,0,0,.45),0 2px 12px rgba(0,0,0,.35);
   --glass-bg:rgba(255,255,255,.06); --glass-2:rgba(255,255,255,.07); --glass-ink:#F4F1E8; --glass-ink-2:#B3AC98; --glass-ink-3:#7E7A6D; --glass-line:rgba(227,176,75,.22);
   --paper-bg:#162034; --paper-2:rgba(255,255,255,.07); --paper-ink:#F4F1E8; --paper-ink-2:#B3AC98; --paper-ink-3:#7E7A6D; --paper-line:rgba(255,255,255,.10);
@@ -50,9 +50,9 @@
 :root[data-skin="green"]{
   --ground:#F2F5F0; --sky-top:#C3D7BC; --sky-mid:#D5E3CF; --sky-low:#E6EEE2; --sky-dusk:#ECF1E8; --sun:rgba(255,255,255,.95); --sky-safe:#4F7A48;
   --sky-ink:#1E2A1F; --sky-ink-2:#4A5A4B; --sky-btn:rgba(255,255,255,.8); --sky-btn-line:rgba(47,90,51,.15); --logo:#4F8A47;
-  /* 写真なし。従来どおり CSS グラデーションの空（右上に白い光のにじみ） */
-  --sky-img:none;
-  --sky-overlay:radial-gradient(70% 55% at 84% 28%,var(--sun) 0,transparent 68%),linear-gradient(180deg,var(--sky-top) 0,var(--sky-mid) 34%,var(--sky-low) 52%,var(--sky-dusk) 72%,var(--ground) 100%);
+  /* 専用写真（明るい窓辺）。被せは薄い白〜淡緑。最上段の濃い緑の帯（--sky-safe）は .home::before 側でそのまま */
+  --sky-img:url(../img/bg-green.jpg);
+  --sky-overlay:linear-gradient(180deg,rgba(242,245,240,.28) 0,rgba(242,245,240,.26) 40%,rgba(236,241,232,.66) 68%,rgba(242,245,240,.92) 86%,var(--ground) 100%);
   --sky-text-shadow:0 0 10px rgba(255,255,255,.9),0 0 2px rgba(255,255,255,.9);
   --glass-bg:rgba(255,255,255,.78); --glass-2:rgba(47,90,51,.08); --glass-ink:#1E2A1F; --glass-ink-2:#5F6E60; --glass-ink-3:#7F8C80; --glass-line:rgba(47,90,51,.12);
   --paper-bg:#FFFFFF; --paper-2:#F3F6F1; --paper-ink:#1E2A1F; --paper-ink-2:#5F6E60; --paper-ink-3:#7F8C80; --paper-line:#E2EADF;
@@ -112,7 +112,7 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;strok
 /* ---------- ホーム ---------- */
 .home{position:relative;padding:0 calc(14px + var(--safe-r)) 16px calc(14px + var(--safe-l));gap:12px}
 /* 上部の「空」: 下から 写真(--sky-img) → テーマごとの色の被せ(--sky-overlay。下端は --ground に溶ける) → 最上段の帯（safe-area＋40px のフェード。グリーンだけ濃い緑＝iOS の白いステータスバー文字用）。
-   写真は cover・上中央寄せ。写真が無いテーマは --sky-img:none で被せのグラデーションだけが見える */
+   写真は cover・上中央寄せ。写真を外すテーマがあれば --sky-img:none で被せのグラデーションだけになる */
 .home::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(300px + var(--safe-t));z-index:0;pointer-events:none;background-color:var(--sky-top);
   background-image:
     linear-gradient(180deg,var(--sky-safe) 0,var(--sky-safe) var(--safe-t),transparent calc(var(--safe-t) + 40px)),
