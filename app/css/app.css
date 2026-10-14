@@ -1,5 +1,5 @@
-/* WorkOut Note v2.1.2 — 3 テーマ（サンセット／ゴールド／グリーン。仕様書09）。基準は mock/ref_v3/home_sunset.png / home_gold_green.png
-   v2.1.1: 上部の空に背景写真（--sky-img）＋テーマごとの色の被せ（--sky-overlay）。仕様書09 7章。v2.1.2: ゴールド／グリーン専用写真
+/* WorkOut Note v2.1.3 — 3 テーマ（サンセット／ゴールド／グリーン。仕様書09）。基準は mock/ref_v3/home_sunset.png / home_gold_green.png
+   v2.1.1: 上部の空に背景写真（--sky-img）＋テーマごとの色の被せ（--sky-overlay）。仕様書09 7章。v2.1.2: ゴールド／グリーン専用写真。v2.1.3: ヘッダー領域を高くして写真の被写体を見せる（仕様書09 8章）
    トークンの考え方: 画面の地 --ground、上部の空 --sky-*、暗い半透明カード --glass-*、紙カード --paper-*、アクセント --accent/--grad、
    カレンダー --cal-*、集計アイコン --chip-*。サブ画面は --surface/--ink/--ink-2/--line（＝--paper-* に割り当て）を参照する */
 :root{
@@ -48,9 +48,9 @@
   color-scheme:dark;
 }
 :root[data-skin="green"]{
-  --ground:#F2F5F0; --sky-top:#C3D7BC; --sky-mid:#D5E3CF; --sky-low:#E6EEE2; --sky-dusk:#ECF1E8; --sun:rgba(255,255,255,.95); --sky-safe:#4F7A48;
+  --ground:#F2F5F0; --sky-top:#C3D7BC; --sky-mid:#D5E3CF; --sky-low:#E6EEE2; --sky-dusk:#ECF1E8; --sun:rgba(255,255,255,.95); --sky-safe:rgba(79,122,72,.80);
   --sky-ink:#1E2A1F; --sky-ink-2:#4A5A4B; --sky-btn:rgba(255,255,255,.8); --sky-btn-line:rgba(47,90,51,.15); --logo:#4F8A47;
-  /* 専用写真（明るい窓辺）。被せは薄い白〜淡緑。最上段の濃い緑の帯（--sky-safe）は .home::before 側でそのまま */
+  /* 専用写真（明るい窓辺）。被せは薄い白〜淡緑。最上段の帯（--sky-safe）は safe-area の範囲だけ半透明の緑（白いステータスバー文字用、写真が透ける） */
   --sky-img:url(../img/bg-green.jpg);
   --sky-overlay:linear-gradient(180deg,rgba(242,245,240,.28) 0,rgba(242,245,240,.26) 40%,rgba(236,241,232,.66) 68%,rgba(242,245,240,.92) 86%,var(--ground) 100%);
   --sky-text-shadow:0 0 10px rgba(255,255,255,.9),0 0 2px rgba(255,255,255,.9);
@@ -111,16 +111,18 @@ svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;strok
 
 /* ---------- ホーム ---------- */
 .home{position:relative;padding:0 calc(14px + var(--safe-r)) 16px calc(14px + var(--safe-l));gap:12px}
-/* 上部の「空」: 下から 写真(--sky-img) → テーマごとの色の被せ(--sky-overlay。下端は --ground に溶ける) → 最上段の帯（safe-area＋40px のフェード。グリーンだけ濃い緑＝iOS の白いステータスバー文字用）。
+/* 上部の「空」: 下から 写真(--sky-img) → テーマごとの色の被せ(--sky-overlay。下端は --ground に溶ける) → 最上段の帯（safe-area の範囲＋24px のフェード。グリーンだけ半透明の緑＝iOS の白いステータスバー文字用）。
    写真は cover・上中央寄せ。写真を外すテーマがあれば --sky-img:none で被せのグラデーションだけになる */
 .home::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(300px + var(--safe-t));z-index:0;pointer-events:none;background-color:var(--sky-top);
   background-image:
-    linear-gradient(180deg,var(--sky-safe) 0,var(--sky-safe) var(--safe-t),transparent calc(var(--safe-t) + 40px)),
+    linear-gradient(180deg,var(--sky-safe) 0,var(--sky-safe) var(--safe-t),transparent calc(var(--safe-t) + 24px)),
     var(--sky-overlay),
     var(--sky-img);
   background-size:cover;background-position:center top;background-repeat:no-repeat}
 .home>*{position:relative;z-index:1}
-.htop{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding-top:calc(var(--safe-t) + 18px);margin-bottom:4px;min-height:92px;color:var(--sky-ink)}
+/* ヘッダー領域: 文字の下に写真の被写体が見える余白を取り、最初のカード行が「コンテンツ上端から約 200px（safe-area 除く）」で始まる（184 + margin 4 + gap 12）。
+   写真の箱は 300px + safe-t なので、下端 100px のフェードにカード行が重なる（参考画像と同じ比率。仕様書09 8章） */
+.htop{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding-top:calc(var(--safe-t) + 18px);margin-bottom:4px;min-height:calc(184px + var(--safe-t));color:var(--sky-ink)}
 .brand{display:flex;align-items:flex-start;gap:10px;min-width:0}
 .logo{display:grid;place-items:center;width:30px;height:30px;margin-top:3px;color:var(--logo);flex:none}
 .logo svg.ic{width:30px;height:30px;stroke-width:2.4}
