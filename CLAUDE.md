@@ -7,7 +7,7 @@
 - 公開URL: https://tsukujigawa99.github.io/workout-note/ （main へ push → GitHub Actions が `app/` を Pages へ自動デプロイ、1〜2分）
 - リポジトリ: https://github.com/tsukujigawa99/workout-note
 - Firebase プロジェクト: `workout-note-b45cd`（Firestore 東京、Google ログイン）。接続情報は `app/js/firebase-config.js`（公開値）。
-- 現行版: v2.1.0（2026-10-14、3 テーマ＝サンセット／ゴールド／グリーン。依頼者確定の参考画像 `mock/ref_v3/`）。自動テスト `tests/test.html` 175件 PASS。
+- 現行版: v2.1.1（2026-10-14、3 テーマ＋上部の背景写真 `app/img/bg-sunset.jpg`）。自動テスト `tests/test.html` 176件 PASS。
 
 ## 体制（依頼者指定・必ず維持）
 - PM／窓口 = メイン会話。依頼者とのやり取り、仕様決定、報告。
@@ -17,7 +17,7 @@
 
 ## 技術制約
 - ビルドなし。素の HTML/CSS/JS（ES Modules）。外部ライブラリは Firebase JS SDK 12.19.0（gstatic から動的 import）と Google Fonts のみ。相対パス必須（サブパス配信）。
-- 見た目の基準は `mock/ref_v3/home_sunset.png`（サンセット＝既定）と `home_gold_green.png`（左ゴールド／右グリーン）＋仕様書 `docs/09`（配置は 3 テーマ共通、配色トークンと上部の空だけ差し替え）。`mock/ref_v2/`（v2.0.0 の赤／ブルー）と `mock/mock.html`（v1、筋トレMEMO似）は廃止・資料として残置。勝手に変えない。テーマ id は `sunset`/`gold`/`green`（旧保存値 `red`→sunset、`black`/`blue`→gold。`defaults.js` の `normalizeSkin`）。上部の空は CSS グラデーション（写真素材なし。依頼者の写真を使う案は未着手）。
+- 見た目の基準は `mock/ref_v3/home_sunset.png`（サンセット＝既定）と `home_gold_green.png`（左ゴールド／右グリーン）＋仕様書 `docs/09`（配置は 3 テーマ共通、配色トークンと上部の空だけ差し替え）。`mock/ref_v2/`（v2.0.0 の赤／ブルー）と `mock/mock.html`（v1、筋トレMEMO似）は廃止・資料として残置。勝手に変えない。テーマ id は `sunset`/`gold`/`green`（旧保存値 `red`→sunset、`black`/`blue`→gold。`defaults.js` の `normalizeSkin`）。上部の空は写真（`app/img/`、依頼者提供）＋テーマごとの色の被せ（`--sky-img`／`--sky-overlay`）。サンセット＝bg-sunset.jpg、ゴールドは当面同じ写真を暗く、グリーンは写真なし（グラデーション）。ゴールド用（青い夕暮れ）・グリーン用（明るい窓辺）の写真は依頼者から再送待ち（画面上では見えたがファイルとして届かなかった）。届いたら Pillow で幅 1080・上部 900px・JPEG q82 に縮小して `bg-gold.jpg`／`bg-green.jpg` を置き、CSS の `--sky-img`・sw.js SHELL・tests を更新。
 - ローカル確認: `python -m http.server 8765 --directory app`。テスト: リポジトリ直下を 8766 で配信し `/tests/test.html` を前面タブで開く。
 - リリース時は `app/sw.js` の `CACHE_VERSION` と `app/js/defaults.js` の `APP_VERSION` を両方上げる。新規ファイルは sw.js のシェル一覧にも追加。SDK 版を変える時は `firebase-config.js` と `sw.js` の両方。
 - 記録写真（`app/js/photo.js`、描画は `photo-themes.js`）は写真を端末内の canvas で合成するだけ。写真をストレージ・Firestore に保存しない／送信しない（依頼者との約束に準じる）。追加フォント（Zen Maru Gothic / Yomogi / Cormorant Garamond / Noto Serif JP / Great Vibes / Permanent Marker / Oswald 700）は記録写真のシートを開いた時に動的に読み込む（index.html には足さない）。

@@ -802,12 +802,23 @@ await test('index.html の初期化スクリプトと theme-color が defaults.j
   const mf = JSON.parse(await (await fetch('../app/manifest.webmanifest', { cache: 'no-store' })).text()); eq(mf.theme_color, '#101729'); eq(mf.background_color, '#101729');
 });
 
+group('v2.1.1: 上部の背景写真（仕様書09 7章）');
+await test('app.css: テーマごとに --sky-img（sunset／gold は bg-sunset.jpg、green は none）と --sky-overlay があり、空の要素は被せ＋写真の順で重ねる', async () => {
+  const css = await (await fetch('../app/css/app.css', { cache: 'no-store' })).text();
+  const block = (sel) => { const i = css.indexOf(sel); ok(i >= 0, sel + ' が無い'); return css.slice(i, css.indexOf('}', i)); };
+  const root = css.slice(0, css.indexOf(':root[data-skin="gold"]')), gold = block(':root[data-skin="gold"]'), green = block(':root[data-skin="green"]');
+  ok(root.includes('--sky-img:url(../img/bg-sunset.jpg)'), 'sunset の --sky-img'); ok(gold.includes('--sky-img:url(../img/bg-sunset.jpg)'), 'gold の --sky-img'); ok(green.includes('--sky-img:none'), 'green の --sky-img は none');
+  [root, gold, green].forEach(b => ok(b.includes('--sky-overlay:'), '--sky-overlay が無い'));
+  const sky = block('.home::before'); ok(/var\(--sky-overlay\),\s*var\(--sky-img\)/.test(sky), '被せ→写真の順になっていない'); ok(sky.includes('background-size:cover') && sky.includes('background-position:center top'), '写真の cover／上中央寄せ');
+  ok((await fetch('../app/img/bg-sunset.jpg', { cache: 'no-store' })).ok, 'img/bg-sunset.jpg が無い');
+});
+
 group('Firebase: 設定・SW・ルールの整合');
 await test('firebaseConfig と SDK の URL', () => { eq(CFG.firebaseConfig.projectId, 'workout-note-b45cd'); eq(CFG.firebaseConfig.authDomain, 'workout-note-b45cd.firebaseapp.com'); ok(/^\d+\.\d+\.\d+$/.test(CFG.SDK_VERSION)); eq(CFG.SDK_BASE, 'https://www.gstatic.com/firebasejs/' + CFG.SDK_VERSION + '/'); eq(CFG.SDK_FILES, ['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js']); });
 await test('sw.js: SDK バージョンが一致し、新規ファイルがアプリシェルに入っている／API・認証の通信には触らない', async () => {
   const sw = await (await fetch('../app/sw.js', { cache: 'no-store' })).text();
-  eq(sw.match(/const SDK_VERSION = '([^']+)'/)[1], CFG.SDK_VERSION); eq(sw.match(/const CACHE_VERSION = '([^']+)'/)[1], 'v' + D.APP_VERSION); eq(D.APP_VERSION, '2.1.0');
-  ['js/firebase-config.js', 'js/auth.js', 'js/store-firebase.js', 'js/migrate.js', 'js/cloud.js', 'js/photo.js', 'js/photo-layout.js', 'js/photo-themes.js'].forEach(f => ok(sw.includes("'" + f + "'"), f + ' が SHELL に無い'));
+  eq(sw.match(/const SDK_VERSION = '([^']+)'/)[1], CFG.SDK_VERSION); eq(sw.match(/const CACHE_VERSION = '([^']+)'/)[1], 'v' + D.APP_VERSION); eq(D.APP_VERSION, '2.1.1');
+  ['js/firebase-config.js', 'js/auth.js', 'js/store-firebase.js', 'js/migrate.js', 'js/cloud.js', 'js/photo.js', 'js/photo-layout.js', 'js/photo-themes.js', 'img/bg-sunset.jpg'].forEach(f => ok(sw.includes("'" + f + "'"), f + ' が SHELL に無い'));
   const code = sw.split('\n').filter(l => !l.trim().startsWith('//')).join('\n'); ['firestore.googleapis.com', 'identitytoolkit', 'securetoken', 'apis.google.com', 'firebaseapp.com'].forEach(h => ok(!code.includes(h), h + ' を SW のコードで扱っている'));
 });
 await test('firestore.rules: 本人だけが自分の users/{uid} 以下を読み書きできる', async () => {

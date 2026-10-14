@@ -1,6 +1,6 @@
 // defaults.js — 初期の部位・種目マスタ、設定初期値
 export const APP_NAME = 'WorkOut Note';
-export const APP_VERSION = '2.1.0';   // sw.js の CACHE_VERSION も合わせて上げること
+export const APP_VERSION = '2.1.1';   // sw.js の CACHE_VERSION も合わせて上げること
 
 /** テーマ（端末ごと。localStorage 'won-skin'）。v2.1.0 で 3 種に（仕様書09） */
 export const SKINS = ['sunset', 'gold', 'green'];

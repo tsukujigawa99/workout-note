@@ -1,6 +1,6 @@
 // sw.js — アプリシェルのキャッシュ（stale-while-revalidate）＋ Firebase SDK のキャッシュ（cache-first）。オフライン起動可
 // ファイルを更新したら CACHE_VERSION を上げる（旧キャッシュは activate で削除）
-const CACHE_VERSION = 'v2.1.0';
+const CACHE_VERSION = 'v2.1.1';
 // Firebase JS SDK のバージョン。js/firebase-config.js の SDK_VERSION と必ず揃えること（tests/test.html で一致を検査）
 const SDK_VERSION = '12.19.0';
 const SHELL_CACHE = 'won-shell-' + CACHE_VERSION;
@@ -13,6 +13,7 @@ const SHELL = [
   'js/screens/home.js', 'js/screens/pick.js', 'js/screens/entry.js', 'js/screens/history.js', 'js/screens/analysis.js',
   'js/screens/body.js', 'js/screens/settings.js', 'js/screens/master.js', 'js/screens/sheets.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'icons/favicon.ico', 'icons/favicon-32.png',
+  'img/bg-sunset.jpg',
 ];
 // SDK の3ファイル（auth / firestore が内部で import するのは同じバージョンの firebase-app.js だけであることを確認済み）
 const SDK_PREFIX = 'https://www.gstatic.com/firebasejs/';
