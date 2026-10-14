@@ -790,11 +790,23 @@ await test('v1.3.1: 定型の飾り文字と使わなくなったフォントが
   ['Zen+Maru+Gothic', 'Yomogi', 'Cormorant+Garamond', 'Noto+Serif+JP', 'Oswald'].forEach(t => ok(photo.includes(t), t + ' が photo.js の Fonts URL に無い'));
 });
 
+group('v2.1.0: テーマ 3 種と旧値の読み替え（仕様書09）');
+await test('SKINS は sunset / gold / green の 3 つ（既定＝先頭の sunset）', () => { eq(D.SKINS, ['sunset', 'gold', 'green']); eq(D.SKINS[0], 'sunset'); eq(Object.keys(D.SKIN_NAMES), ['sunset', 'gold', 'green']); eq(D.SKIN_NAMES.sunset, 'サンセット'); eq(D.SKIN_NAMES.gold, 'ゴールド'); eq(D.SKIN_NAMES.green, 'グリーン'); });
+await test('normalizeSkin: red→sunset、black／blue→gold、新しい値はそのまま', () => { eq(D.normalizeSkin('red'), 'sunset'); eq(D.normalizeSkin('black'), 'gold'); eq(D.normalizeSkin('blue'), 'gold'); eq(D.normalizeSkin('sunset'), 'sunset'); eq(D.normalizeSkin('gold'), 'gold'); eq(D.normalizeSkin('green'), 'green'); });
+await test('normalizeSkin: 不明な値・未保存（null／undefined／空）は sunset', () => { eq(D.normalizeSkin('purple'), 'sunset'); eq(D.normalizeSkin(''), 'sunset'); eq(D.normalizeSkin(null), 'sunset'); eq(D.normalizeSkin(undefined), 'sunset'); eq(D.normalizeSkin(42), 'sunset'); });
+await test('index.html の初期化スクリプトと theme-color が defaults.js と同じ対応表（red→sunset、black／blue→gold、green は明るい色）', async () => {
+  const html = await (await fetch('../app/index.html', { cache: 'no-store' })).text();
+  ok(html.includes('data-skin="sunset"'), '既定の data-skin が sunset でない');
+  ok(html.includes('<meta name="theme-color" content="#101729">'), 'theme-color が #101729 でない');
+  ['red:\'sunset\'', 'black:\'gold\'', 'blue:\'gold\'', 'green:\'green\'', '\'#DCE7D6\''].forEach(t => ok(html.includes(t), t + ' が初期化スクリプトに無い'));
+  const mf = JSON.parse(await (await fetch('../app/manifest.webmanifest', { cache: 'no-store' })).text()); eq(mf.theme_color, '#101729'); eq(mf.background_color, '#101729');
+});
+
 group('Firebase: 設定・SW・ルールの整合');
 await test('firebaseConfig と SDK の URL', () => { eq(CFG.firebaseConfig.projectId, 'workout-note-b45cd'); eq(CFG.firebaseConfig.authDomain, 'workout-note-b45cd.firebaseapp.com'); ok(/^\d+\.\d+\.\d+$/.test(CFG.SDK_VERSION)); eq(CFG.SDK_BASE, 'https://www.gstatic.com/firebasejs/' + CFG.SDK_VERSION + '/'); eq(CFG.SDK_FILES, ['firebase-app.js', 'firebase-auth.js', 'firebase-firestore.js']); });
 await test('sw.js: SDK バージョンが一致し、新規ファイルがアプリシェルに入っている／API・認証の通信には触らない', async () => {
   const sw = await (await fetch('../app/sw.js', { cache: 'no-store' })).text();
-  eq(sw.match(/const SDK_VERSION = '([^']+)'/)[1], CFG.SDK_VERSION); eq(sw.match(/const CACHE_VERSION = '([^']+)'/)[1], 'v' + D.APP_VERSION); eq(D.APP_VERSION, '2.0.0');
+  eq(sw.match(/const SDK_VERSION = '([^']+)'/)[1], CFG.SDK_VERSION); eq(sw.match(/const CACHE_VERSION = '([^']+)'/)[1], 'v' + D.APP_VERSION); eq(D.APP_VERSION, '2.1.0');
   ['js/firebase-config.js', 'js/auth.js', 'js/store-firebase.js', 'js/migrate.js', 'js/cloud.js', 'js/photo.js', 'js/photo-layout.js', 'js/photo-themes.js'].forEach(f => ok(sw.includes("'" + f + "'"), f + ' が SHELL に無い'));
   const code = sw.split('\n').filter(l => !l.trim().startsWith('//')).join('\n'); ['firestore.googleapis.com', 'identitytoolkit', 'securetoken', 'apis.google.com', 'firebaseapp.com'].forEach(h => ok(!code.includes(h), h + ' を SW のコードで扱っている'));
 });

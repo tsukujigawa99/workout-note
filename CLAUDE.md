@@ -7,7 +7,7 @@
 - 公開URL: https://tsukujigawa99.github.io/workout-note/ （main へ push → GitHub Actions が `app/` を Pages へ自動デプロイ、1〜2分）
 - リポジトリ: https://github.com/tsukujigawa99/workout-note
 - Firebase プロジェクト: `workout-note-b45cd`（Firestore 東京、Google ログイン）。接続情報は `app/js/firebase-config.js`（公開値）。
-- 現行版: v2.0.0（2026-10-14、画面デザイン刷新＝ダークな計器板風。筋トレMEMOに似た旧画面を廃止）。自動テスト `tests/test.html` 171件 PASS。
+- 現行版: v2.1.0（2026-10-14、3 テーマ＝サンセット／ゴールド／グリーン。依頼者確定の参考画像 `mock/ref_v3/`）。自動テスト `tests/test.html` 175件 PASS。
 
 ## 体制（依頼者指定・必ず維持）
 - PM／窓口 = メイン会話。依頼者とのやり取り、仕様決定、報告。
@@ -17,7 +17,7 @@
 
 ## 技術制約
 - ビルドなし。素の HTML/CSS/JS（ES Modules）。外部ライブラリは Firebase JS SDK 12.19.0（gstatic から動的 import）と Google Fonts のみ。相対パス必須（サブパス配信）。
-- 見た目の基準は `mock/ref_v2/home_red.png`（赤＝既定）と `home_blue.png`（ブルー）＋仕様書 `docs/08`。旧 `mock/mock.html` は筋トレMEMOに似ているため廃止（資料として残置）。勝手に変えない。テーマは `red`/`blue`（保存値 `black` は `blue` と読む）。
+- 見た目の基準は `mock/ref_v3/home_sunset.png`（サンセット＝既定）と `home_gold_green.png`（左ゴールド／右グリーン）＋仕様書 `docs/09`（配置は 3 テーマ共通、配色トークンと上部の空だけ差し替え）。`mock/ref_v2/`（v2.0.0 の赤／ブルー）と `mock/mock.html`（v1、筋トレMEMO似）は廃止・資料として残置。勝手に変えない。テーマ id は `sunset`/`gold`/`green`（旧保存値 `red`→sunset、`black`/`blue`→gold。`defaults.js` の `normalizeSkin`）。上部の空は CSS グラデーション（写真素材なし。依頼者の写真を使う案は未着手）。
 - ローカル確認: `python -m http.server 8765 --directory app`。テスト: リポジトリ直下を 8766 で配信し `/tests/test.html` を前面タブで開く。
 - リリース時は `app/sw.js` の `CACHE_VERSION` と `app/js/defaults.js` の `APP_VERSION` を両方上げる。新規ファイルは sw.js のシェル一覧にも追加。SDK 版を変える時は `firebase-config.js` と `sw.js` の両方。
 - 記録写真（`app/js/photo.js`、描画は `photo-themes.js`）は写真を端末内の canvas で合成するだけ。写真をストレージ・Firestore に保存しない／送信しない（依頼者との約束に準じる）。追加フォント（Zen Maru Gothic / Yomogi / Cormorant Garamond / Noto Serif JP / Great Vibes / Permanent Marker / Oswald 700）は記録写真のシートを開いた時に動的に読み込む（index.html には足さない）。
@@ -34,11 +34,11 @@
 1b. 記録写真の iPhone 実機: 依頼者が内カメラで撮影して使えたことは確認済み（2026-10-09）。v1.3.0 のデザイン 4 種（追加フォントの読み込み含む）を iPhone で試した結果は回答待ち。
 2. Firebase コンソール設定が済んだか未確認: Firestore ルール（`firestore.rules`）の適用、承認済みドメインに `tsukujigawa99.github.io`。
 3. 友達利用: 利用者をメールアドレス許可リストで限定するルール案と「友達向けかんたん手順」を提案中。友達のスマホが iPhone か Android か回答待ち。
-4. 未判断: アクセント塗りの上の白文字のコントラスト（v2.0.0 で記録あり日 3.2:1、主ボタン 3.5:1。参考画像どおりの配色）は実機確認後に判断。ブルーテーマのカレンダー記録あり日は参考画像では赤だが実装は青（仕様どおり）。依頼者の好みを確認。
+4. 未判断: 390px 幅ではカレンダーのセルが約 22px と小さい（参考画像どおり 2 列のため）。実機でタップしづらければ 1 列化を検討。グリーンの iOS ステータスバー（白文字）対策の濃い緑の帯は実機未確認。アクセント塗りの上の白文字は 3:1 以上を確保（本文は 4.5:1 以上）。
 5. 次版候補: 自己ベストバッジ、CSV/JSON 書き出し、週別バーの数値表示。
 6. `capture/` の画像（雲マッチョ等）は依頼者が置いたもの。用途未確認、リポジトリには含めていない。
 
 ## 文書
-- `docs/01_要件定義書.md`、`02_開発仕様書.md`、`04_フェーズ2仕様_Firebase同期.md`、`06_仕様_記録写真.md`、`07_仕様_記録写真デザイン.md`、`08_仕様_画面デザイン刷新.md`（開発担当への指示の本体）
+- `docs/01_要件定義書.md`、`02_開発仕様書.md`、`04_フェーズ2仕様_Firebase同期.md`、`06_仕様_記録写真.md`、`07_仕様_記録写真デザイン.md`、`08_仕様_画面デザイン刷新.md`、`09_仕様_3テーマ.md`（開発担当への指示の本体）
 - `docs/03`/`05` 手順書（ご本人作業）、`docs/html/` に構成図・手順書・設計書の HTML 版（依頼者向け、最新）
-- `mock/ref_v2/` 現行の見た目の参考画像（v2.0.0）、`mock/mock.html` 旧モック（廃止）、`firestore.rules`、`scripts/make_icons.py`
+- `mock/ref_v3/` 現行の見た目の参考画像（v2.1.0、3 テーマ）、`mock/ref_v2/`・`mock/mock.html` 旧（廃止）、`firestore.rules`、`scripts/make_icons.py`

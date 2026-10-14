@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="ja" data-skin="red">
+<html lang="ja" data-skin="sunset">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>WorkOut Note</title>
 <meta name="description" content="広告なし・自分専用の筋トレ記録ノート">
-<meta name="theme-color" content="#0B0F17">
+<meta name="theme-color" content="#101729">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -20,8 +20,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="css/app.css">
 <script>
-/* テーマを最初の描画前に反映（ちらつき防止） */
-try{var s=localStorage.getItem('won-skin');if(s==='blue'||s==='black')document.documentElement.dataset.skin='blue'}catch(e){}
+/* テーマを最初の描画前に反映（ちらつき防止）。対応表は js/defaults.js の normalizeSkin と同じ（ここでは import できないため直書き） */
+try{var s=localStorage.getItem('won-skin'),m={sunset:'sunset',gold:'gold',green:'green',red:'sunset',black:'gold',blue:'gold'},k=m[s]||'sunset';document.documentElement.dataset.skin=k;var t=document.querySelector('meta[name="theme-color"]');if(t)t.setAttribute('content',k==='green'?'#DCE7D6':'#101729')}catch(e){}
 </script>
 </head>
 <body>

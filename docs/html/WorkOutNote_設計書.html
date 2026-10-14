@@ -76,7 +76,7 @@ footer{color:var(--ink-2);font-size:12.5px;border-top:1px solid var(--line);padd
 <header class="doc">
   <div class="kicker">WORKOUT NOTE / DESIGN DOCUMENT</div>
   <h1>WorkOut Note 設計書</h1>
-  <div class="meta"><span>対象バージョン：v2.0.0</span><span>作成日：2026-09-17</span><span>関連：構成図・手順書（同フォルダ）、docs/01〜08（経緯と詳細仕様）</span></div>
+  <div class="meta"><span>対象バージョン：v2.1.0</span><span>作成日：2026-09-17</span><span>関連：構成図・手順書（同フォルダ）、docs/01〜09（経緯と詳細仕様）</span></div>
   <p class="lead">このアプリを後から直す人（将来の自分を含む）が、<b>どこに何があり、なぜそう作ったのか</b>を短時間でつかむための文書です。全体像は構成図、操作と運用は手順書を参照してください。</p>
 </header>
 
@@ -250,7 +250,8 @@ settings : { step: 2.5, timerSec: 90, updatedAt }</code></pre>
 ├─ tests/test.html            ← 自動テスト（ブラウザで開くと実行）
 ├─ firestore.rules            ← セキュリティルールの控え（適用はコンソールで）
 ├─ .github/workflows/pages.yml← main への push で app/ を公開
-├─ mock/ref_v2/               ← 現行の見た目の参考画像（v2.0.0、見た目の基準）
+├─ mock/ref_v3/               ← 現行の見た目の参考画像（v2.1.0 の 3 テーマ、見た目の基準）
+├─ mock/ref_v2/               ← v2.0.0 の参考画像（廃止）
 ├─ mock/mock.html             ← 旧モック（v1 系。廃止、資料として残置）
 ├─ scripts/make_icons.py      ← アイコン生成
 └─ docs/                      ← 要件定義書・仕様書・手順書・本書</code></pre>
@@ -363,19 +364,19 @@ store.syncState() / store.onSync(cb) / store.onError(cb) / store.onNotice(cb)</c
 <section id="s12">
   <h2>12. 見た目の設計</h2>
   <ul>
-    <li>基準は参考画像 <code>mock/ref_v2/home_red.png</code>（赤＝既定）と <code>home_blue.png</code>（ブルー）、詳細は docs/08。ダークな背景に、大きな日付・連続記録バッジ・リング型の総合計負荷量・棒グラフ付きの集計カード・丸いセルのカレンダー・グラデーションの主ボタン・履歴カードという構成です（v2.0.0。筋トレMEMOに似た旧画面は廃止）。</li>
-    <li>色は <code>:root</code> のトークン（<code>--ground</code>、<code>--surface</code>、<code>--accent</code>、<code>--grad</code>、<code>--ink</code> など）で管理し、ブルーテーマは <code>:root[data-skin="blue"]</code> でトークンだけを差し替えます（保存値 <code>black</code> は <code>blue</code> と読みます）。部品側に色を直書きしません。</li>
+    <li>基準は参考画像 <code>mock/ref_v3/home_sunset.png</code>（サンセット＝既定）と <code>home_gold_green.png</code>（ゴールド／グリーン）、詳細は docs/09。上部に空（CSS グラデーション）、日付カード｜リング型の総合計負荷量、カレンダー｜棒グラフ付きの集計カード 3 枚、MONTHLY ARCHIVE、グラデーションの主ボタン、履歴カードという構成で、3 テーマとも配置は同じです（v2.1.0。筋トレMEMOに似た v1 の画面は廃止）。</li>
+    <li>色は <code>:root</code> のトークンで管理します。暗い半透明カード用の <code>--glass-*</code>、紙カード用の <code>--paper-*</code>（サブ画面の <code>--surface/--ink/--line</code> はこれに割り当て）、<code>--accent</code>／<code>--grad</code>、カレンダー用 <code>--cal-*</code>。ゴールド・グリーンは <code>:root[data-skin="gold"|"green"]</code> でトークンだけを差し替えます（旧保存値 <code>red</code>→sunset、<code>black</code>/<code>blue</code>→gold）。部品側に色を直書きしません。</li>
     <li>数字と英字は Oswald、本文は Noto Sans JP。数字は等幅数字（tabular-nums）。</li>
-    <li>ブレークポイント：〜599px は 1 列（リングと集計カードだけ横並び）、600px〜 は 2 列、960px〜 は 920px の中央カラム。</li>
+    <li>ブレークポイント：〜379px は 1 列、380px〜 は 2 列（左 52%／右 48%）、960px〜 は 920px の中央カラム。380〜479px は連続記録バッジや集計カードの見出しを詰めて収めます。</li>
   </ul>
-  <div class="note"><b>判断保留</b>アクセント色の塗りの上の白文字（記録あり日 3.2:1、主ボタン 3.5:1）は参考画像どおりの配色でコントラストが低めです。実機での見え方を確認してから調整します。</div>
+  <div class="note"><b>判断保留</b>390px 幅ではカレンダーのセルが約 22px と小さめ（参考画像どおり 2 列のため）。実機でタップしづらければ 1 列化を検討します。グリーンの iOS ステータスバー対策（最上段の濃い緑）は実機未確認です。</div>
 </section>
 
 <section id="s13">
   <h2>13. テスト設計</h2>
   <div class="tbl"><table>
     <tr><th>種類</th><th>内容</th></tr>
-    <tr><td>自動テスト</td><td><code>tests/test.html</code> をブラウザで開くと実行（v2.0.0 時点で 171 件、全 PASS）。対象は計算、日付、URL 解析、store の保存・削除・退避、Firestore を模した部品を使った同期（遅れて届くスナップショット、未 ready 時の保存拒否、切替中の保存不可、移行、再接続、ログイン連打など）、設定と Service Worker とルールの整合、記録写真の文字組みと縮小計算。</td></tr>
+    <tr><td>自動テスト</td><td><code>tests/test.html</code> をブラウザで開くと実行（v2.1.0 時点で 175 件、全 PASS）。対象は計算、日付、URL 解析、store の保存・削除・退避、Firestore を模した部品を使った同期（遅れて届くスナップショット、未 ready 時の保存拒否、切替中の保存不可、移行、再接続、ログイン連打など）、設定と Service Worker とルールの整合、記録写真の文字組みと縮小計算。</td></tr>
     <tr><td>独立した手動テスト</td><td>開発とは別の担当が、スマホ幅（320〜430px）と PC 幅で実際に操作。既知のデータを入れて集計値を手計算と照合し、異常入力・戻る操作・両テーマ・誤タップを確認。指摘は修正後に再確認。</td></tr>
     <tr><td>実機・実ログインでの確認（利用者）</td><td>開発側は Google にログインできないため、ログイン後の同期、移行、オフライン記録、iPhone のホーム画面アプリからのログイン、音、ノッチ周りは利用者が確認する（手順書 5章）。</td></tr>
   </table></div>
@@ -404,8 +405,9 @@ store.syncState() / store.onSync(cb) / store.onError(cb) / store.onNotice(cb)</c
     <tr><td>v1.3.0</td><td>記録写真のデザイン 4 種（ノーマル／かわいい／おしゃれ／かっこいい）。仕様は docs/07。</td></tr>
     <tr><td>v1.3.1</td><td>記録写真の周りの定型の飾り文字を削除（依頼者の指示）。カードが使える高さが増えた。</td></tr>
     <tr><td>v2.0.0</td><td>画面デザインの刷新（ダークな計器板風）。テーマは赤／ブルー。連続記録バッジ・リング型ゲージを追加。機能は不変。仕様は docs/08。</td></tr>
+    <tr><td>v2.1.0</td><td>依頼者確定の参考画像 3 種に合わせ、テーマをサンセット／ゴールド／グリーンの 3 つに。上部の空（グラデーション）、紙カードと半透明カードの使い分け、集計 3 枚＋折れ線。機能は不変。仕様は docs/09。</td></tr>
   </table></div>
 </section>
 
-<footer>WorkOut Note 設計書 ／ v2.0.0 時点の内容です。設計を変更した時は本書と改版履歴を更新してください。</footer>
+<footer>WorkOut Note 設計書 ／ v2.1.0 時点の内容です。設計を変更した時は本書と改版履歴を更新してください。</footer>
 </div>

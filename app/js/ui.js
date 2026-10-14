@@ -25,6 +25,8 @@ const IC = {
   pencil: 'M3 21l4-1L19 8l-3-3L4 17zM14 7l3 3',
   sigma: 'M18 5H6l6 7-6 7h12',
   ring: 'M12 3a9 9 0 109 9',
+  // v2.1.0 ホーム用（仕様書09）: トレーニング履歴の見出しのノート
+  note: 'M7 3h12v18H7zM4 7h3M4 12h3M4 17h3M11 9h5M11 13h5',
 };
 export const ic = n => n === 'skin'
   ? '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18z" fill="currentColor"/></svg>'

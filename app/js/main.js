@@ -8,6 +8,7 @@ import { initCloud } from './cloud.js';
 import { timer } from './timer.js';
 import { $, ic, toast, exOf, dropActionToast, runToastAction } from './ui.js';
 import { todayKey, parseHash, exHistory } from './calc.js';
+import { SKINS, normalizeSkin } from './defaults.js';
 import home from './screens/home.js';
 import pick from './screens/pick.js';
 import entry, { refreshTimer, tickTimer } from './screens/entry.js';
@@ -22,12 +23,12 @@ import * as photo from './photo.js';
 const SCREENS = { home, pick, entry, history: historyScr, analysis, body, settings, master };
 const TAB_SCREENS = ['home', 'analysis', 'body', 'settings'];
 const TABS = [['home', 'home', 'ホーム'], ['analysis', 'chart', '履歴/分析'], ['body', 'body', '体組成'], ['settings', 'set', '設定']];
-const SKIN_KEY = 'won-skin', THEME_COLOR = { red: '#0B0F17', blue: '#0B0F17' };
+const SKIN_KEY = 'won-skin', THEME_COLOR = { sunset: '#101729', gold: '#101729', green: '#DCE7D6' };
 
 /* ---------- テーマ（端末ごと。同期対象外） ---------- */
-let skin = 'red';
-// 保存値 'black'（v1 の黒テーマ）は 'blue' として読む（既存ユーザーの設定を壊さない）
-try { const v = localStorage.getItem(SKIN_KEY); skin = v === 'blue' || v === 'black' ? 'blue' : 'red'; } catch (e) { /* noop */ }
+let skin = 'sunset';
+// 旧値（red／black／blue）は normalizeSkin で読み替える（既存ユーザーの設定を壊さない）
+try { skin = normalizeSkin(localStorage.getItem(SKIN_KEY)); } catch (e) { /* noop */ }
 function applySkin() {
   document.documentElement.dataset.skin = skin;
   const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', THEME_COLOR[skin]);
@@ -87,10 +88,11 @@ const ACTIONS = {
   logout() { cloud.signOut(); },
   migrateNow() { cloud.migrateNow(); },
   reconnect() { cloud.reconnect(); },
-  skin() {
-    skin = skin === 'red' ? 'blue' : 'red'; applySkin();
+  // 引数なし（ホーム右上）＝ sunset → gold → green → sunset と巡回。引数あり（設定のテーマ選択シート）＝その値
+  skin(v) {
+    skin = SKINS.includes(v) ? v : SKINS[(SKINS.indexOf(skin) + 1) % SKINS.length]; applySkin();
     try { localStorage.setItem(SKIN_KEY, skin); } catch (e) { /* 保存できなくても切替自体は有効 */ }
-    if (S.route.name === 'settings') render(true);
+    if (S.route.name === 'settings') { if (sheets.sheetOpen()) sheets.closeSheet(); render(true); }
   },
 };
 [sheets, photo, ...Object.values(SCREENS)].forEach(m => Object.assign(ACTIONS, m.actions));

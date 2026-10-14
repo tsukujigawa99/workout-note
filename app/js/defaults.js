@@ -1,6 +1,16 @@
 // defaults.js — 初期の部位・種目マスタ、設定初期値
 export const APP_NAME = 'WorkOut Note';
-export const APP_VERSION = '2.0.0';   // sw.js の CACHE_VERSION も合わせて上げること
+export const APP_VERSION = '2.1.0';   // sw.js の CACHE_VERSION も合わせて上げること
+
+/** テーマ（端末ごと。localStorage 'won-skin'）。v2.1.0 で 3 種に（仕様書09） */
+export const SKINS = ['sunset', 'gold', 'green'];
+export const SKIN_NAMES = { sunset: 'サンセット', gold: 'ゴールド', green: 'グリーン' };
+/** 保存値の読み替え: 旧 red→sunset、black／blue→gold、不明→sunset（index.html の初期化スクリプトにも同じ対応表を直書きしている） */
+export function normalizeSkin(v) {
+  if (v === 'red') return 'sunset';
+  if (v === 'black' || v === 'blue') return 'gold';
+  return SKINS.includes(v) ? v : 'sunset';
+}
 
 export const DEFAULT_PARTS = [
   { id: 'chest', name: '胸', color: '#E07A3F' },
