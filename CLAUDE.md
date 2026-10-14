@@ -7,7 +7,7 @@
 - 公開URL: https://tsukujigawa99.github.io/workout-note/ （main へ push → GitHub Actions が `app/` を Pages へ自動デプロイ、1〜2分）
 - リポジトリ: https://github.com/tsukujigawa99/workout-note
 - Firebase プロジェクト: `workout-note-b45cd`（Firestore 東京、Google ログイン）。接続情報は `app/js/firebase-config.js`（公開値）。
-- 現行版: v2.1.4（2026-10-14、3 テーマそれぞれに上部の背景写真 `app/img/bg-{sunset,gold,green}.jpg`。実機比較で上部の構図とカードの大きさを参考画像 `mock/ref_v3/home_green_iphone.jpg` に合わせた）。自動テスト `tests/test.html` 177件 PASS。
+- 現行版: v2.1.5（2026-10-14、グリーンの写真を縦長の新素材に差し替え。3 テーマそれぞれに上部の背景写真 `app/img/bg-{sunset,gold,green}.jpg`。実機比較で上部の構図とカードの大きさを参考画像 `mock/ref_v3/home_green_iphone.jpg` に合わせた）。自動テスト `tests/test.html` 177件 PASS。
 
 ## 体制（依頼者指定・必ず維持）
 - PM／窓口 = メイン会話。依頼者とのやり取り、仕様決定、報告。
